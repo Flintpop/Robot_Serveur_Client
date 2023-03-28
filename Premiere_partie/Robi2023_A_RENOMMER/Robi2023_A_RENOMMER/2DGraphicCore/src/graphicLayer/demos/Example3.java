@@ -18,11 +18,7 @@ import graphicLayer.GString;
 public class Example3 implements MouseListener {
 
 	public Example3() {
-		javax.swing.SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				createAndShowGUI();
-			}
-		});
+		javax.swing.SwingUtilities.invokeLater(this::createAndShowGUI);
 	}
 
 	public void createAndShowGUI ( ) {
