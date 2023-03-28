@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry excluding="client_robi_swing/" kind="src" path="Deuxieme_partie"/>
+	<classpathentry kind="src" path="Deuxieme_partie/client_robi_swing"/>
+	<classpathentry kind="src" path="Premiere_partie/Robi2023_A_RENOMMER/Robi2023_A_RENOMMER/2DGraphicCore/src"/>
+	<classpathentry kind="src" path="Premiere_partie/Robi2023_A_RENOMMER/Robi2023_A_RENOMMER/Robi/src"/>
+	<classpathentry kind="src" path="Premiere_partie/Robi2023_A_RENOMMER/Robi2023_A_RENOMMER/SParser/src"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
