@@ -1,6 +1,4 @@
-package exercice5.examples;
-
-import exercice5.Exercice5;
+package exercice5;
 
 public class Example1 {
 	

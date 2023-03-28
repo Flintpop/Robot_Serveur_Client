@@ -1,4 +1,4 @@
-package exercice5.examples;
+package exercice5;
 
 import exercice6.Exercice6;
 

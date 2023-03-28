@@ -40,6 +40,7 @@ import java.awt.Dimension;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 import graphicLayer.GImage;
 import graphicLayer.GOval;
@@ -122,7 +123,7 @@ public class Exercice4_2_0 {
 				e.printStackTrace();
 			}
 			// execution des s-expressions compilees
-			Iterator<SNode> itor = compiled.iterator();
+			Iterator<SNode> itor = Objects.requireNonNull(compiled).iterator();
 			while (itor.hasNext()) {
 				new Interpreter().compute(environment, itor.next());
 			}
