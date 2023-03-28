@@ -14,31 +14,34 @@ public class Exercice1_0 {
 		space.addElement(robi);
 		space.open();
 
-		int currentX = 0;
-		int currentY = 0;
+		Point point = new Point();
 
 		int wait_time = 2;
 		while (true) {
 			for (int i = 0; i < space.getWidth() - robi.getWidth(); i++) {
-				currentX = i;
-				robi.setPosition(new Point(currentX, currentY));
+				point.x++;
+				robi.setPosition(point);
 				Tools.sleep(wait_time);
 			}
 			for (int i = 0; i < space.getHeight() - robi.getHeight(); i++) {
-				currentY = i;
-				robi.setPosition(new Point(currentX, currentY));
+				point.y++;
+				robi.setPosition(point);
 				Tools.sleep(wait_time);
 			}
 			for (int i = 0; i < space.getWidth() - robi.getWidth(); i++) {
-				currentX--;
-				robi.setPosition(new Point(currentX, currentY));
+				point.x--;
+				robi.setPosition(point);
 				Tools.sleep(wait_time);
 			}
 			for (int i = 0; i < space.getHeight() - robi.getHeight(); i++) {
-				currentY--;
-				robi.setPosition(new Point(currentX, currentY));
+				point.y--;
+				robi.setPosition(point);
 				Tools.sleep(wait_time);
 			}
+			// Set random color
+			// Q: Why is there is 0x1000000 ?
+			// A: 0x1000000 is the maximum value of a color in hexadecimal
+			robi.setColor(new Color((int) (Math.random() * 0x1000000)));
 		}
 	}
 
