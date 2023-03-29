@@ -1,6 +1,6 @@
 package exercice4;
 
-<<<<<<< Updated upstream
+
 import graphicLayer.GElement;
 import graphicLayer.GSpace;
 import stree.parser.SNode;
@@ -30,7 +30,7 @@ public class AddElement implements Command {
 		
 		return null;
 	}
-=======
+
 import stree.parser.SNode;
 import graphicLayer.GSpace;
 public class AddElement implements Command {
@@ -45,5 +45,5 @@ public class AddElement implements Command {
         env.addReference(method.get(2).contents(),ref);
 
     }
->>>>>>> Stashed changes
+
 }
