@@ -1,6 +1,6 @@
 package exercice4;
 
-<<<<<<< Updated upstream
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,37 +39,6 @@ public class Reference {
     	if(!primitives.containsKey(selector)) {
     		primitives.put(selector, primitive);
     	}
-=======
-import stree.parser.SNode;
-
-import java.util.HashMap;
-import java.util.Map;
-
-public class Reference {
-    Object obj;
-    Map<String,Command> hm = new HashMap<String,Command>();
-    public Reference(Object obj) {
-        this.obj = obj;
-    }
-
-    public void run(SNode expr) {
-        Command cmd = getCommandByName(expr.get(1).contents());
-        if (cmd == null)
-            throw new Error("unable to get command for: " + expr.contents());
-        cmd.run(this, expr);
-    }
-
-    public void addCommand(String selector, Command primitive) {
-        hm.put(selector, primitive);
-    }
-
-    public Command getCommandByName(String name) {
-        return hm.get(name);
-    }
-
-    public Object getReceiver() {
-        return obj;
->>>>>>> Stashed changes
     }
 
 }
