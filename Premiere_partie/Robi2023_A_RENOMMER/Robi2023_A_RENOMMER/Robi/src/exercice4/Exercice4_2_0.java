@@ -89,6 +89,7 @@ public class Exercice4_2_0 {
 
 		spaceRef.addCommand("setColor", new SetColor());
 		spaceRef.addCommand("sleep", new Sleep());
+		spaceRef.addCommand("setDim", new SetDim());
 
 		spaceRef.addCommand("add", new AddElement(environment));
 		spaceRef.addCommand("del", new DelElement(environment));
