@@ -1,6 +1,5 @@
 package exercice4;
 
-<<<<<<< Updated upstream
 import java.awt.Color;
 import java.util.HashMap;
 import java.util.Map;

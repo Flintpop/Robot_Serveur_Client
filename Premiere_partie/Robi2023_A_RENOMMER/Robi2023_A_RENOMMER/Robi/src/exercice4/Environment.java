@@ -7,7 +7,7 @@ public class Environment {
 	HashMap<String, Reference> variables;
 	
 	public Environment() {
-		variables = new HashMap<String, Reference>();
+		variables = new HashMap<>();
 	}
 	
     public void addReference(String refName, Reference ref) {

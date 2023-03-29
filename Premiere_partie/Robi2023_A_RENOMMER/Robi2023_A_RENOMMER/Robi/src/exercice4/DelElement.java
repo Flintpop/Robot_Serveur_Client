@@ -1,6 +1,5 @@
 package exercice4;
 
-<<<<<<< Updated upstream
 import graphicLayer.GElement;
 import graphicLayer.GSpace;
 import stree.parser.SNode;

@@ -43,7 +43,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 
@@ -54,36 +53,11 @@ import graphicLayer.GSpace;
 import graphicLayer.GString;
 import stree.parser.SNode;
 import stree.parser.SParser;
-import tools.Tools;
-
-
-/*
-class NewElement implements Command {
-	public Reference run(Reference reference, SNode method) {
-		try {
-			@SuppressWarnings("unchecked")
-			GElement e = ((Class<GElement>) reference.getReceiver()).getDeclaredConstructor().newInstance();
-			Reference ref = new Reference(e);
-			ref.addCommand("setColor", new SetColor());
-			ref.addCommand("translate", new Translate());
-			ref.addCommand("setDim", new SetDim());
-			return ref;
-		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
-				| NoSuchMethodException | SecurityException e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
-}
-*/
 
 public class Exercice4_2_0 {
 
     // Une seule variable d'instance
     Environment environment = new Environment();
-
-	// Une seule variable d'instance
-	Environment environment = new Environment();
 
 	public Exercice4_2_0() {
 		GSpace space = new GSpace("Exercice 4", new Dimension(200, 100));
@@ -115,61 +89,6 @@ public class Exercice4_2_0 {
 		
 		this.mainLoop();
 	}
-	
-	private void mainLoop() {
-		while (true) {
-			// prompt
-			System.out.print("> ");
-			// lecture d'une serie de s-expressions au clavier (return = fin de la serie)
-			String input = Tools.readKeyboard();
-			// creation du parser
-			SParser<SNode> parser = new SParser<>();
-			// compilation
-			List<SNode> compiled = null;
-			try {
-				compiled = parser.parse(input);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			// execution des s-expressions compilees
-			Iterator<SNode> itor = Objects.requireNonNull(compiled).iterator();
-			while (itor.hasNext()) {
-				new Interpreter().compute(environment, itor.next());
-			}
-		}
-	}
-
-
-    public Exercice4_2_0() {
-        GSpace space = new GSpace("Exercice 4", new Dimension(200, 100));
-        space.open();
-
-        Reference spaceRef = new Reference(space);
-        Reference rectClassRef = new Reference(GRect.class);
-        Reference ovalClassRef = new Reference(GOval.class);
-        Reference imageClassRef = new Reference(GImage.class);
-        Reference stringClassRef = new Reference(GString.class);
-
-        spaceRef.addCommand("setColor", new SetColor());
-        spaceRef.addCommand("sleep", new Sleep());
-
-        spaceRef.addCommand("add", new AddElement(environment));
-        spaceRef.addCommand("del", new DelElement(environment));
-
-        rectClassRef.addCommand("new", new NewElement());
-        ovalClassRef.addCommand("new", new NewElement());
-        imageClassRef.addCommand("new", new NewImage());
-        stringClassRef.addCommand("new", new NewString());
-
-        environment.addReference("space", spaceRef);
-        environment.addReference("Rect", rectClassRef);
-        environment.addReference("Oval", ovalClassRef);
-        environment.addReference("Image", imageClassRef);
-        environment.addReference("Label", stringClassRef);
-
-        this.mainLoop();
-    }
 
     private void mainLoop() {
         while (true) {
@@ -197,19 +116,16 @@ public class Exercice4_2_0 {
                     e.printStackTrace();
                 }
                 // execution des s-expressions compilees
-                Iterator<SNode> itor = Objects.requireNonNull(compiled).iterator();
-                while (itor.hasNext()) {
-                    new Interpreter().compute(environment, itor.next());
+                for (SNode sNode : Objects.requireNonNull(compiled)) {
+                    new Interpreter().compute(environment, sNode);
                 }
+                serveurFTP.close();
 
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
-
         }
     }
-
 
     public static void main(String[] args) {
         new Exercice4_2_0();

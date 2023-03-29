@@ -30,3 +30,4 @@ public class AddElement implements Command {
 
 		return null;
 	}
+}

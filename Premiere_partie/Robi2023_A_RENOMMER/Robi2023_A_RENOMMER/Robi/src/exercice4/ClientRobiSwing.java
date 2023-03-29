@@ -1,26 +1,16 @@
 package exercice4;
 
-import java.awt.BorderLayout;
-import java.awt.Button;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.*;
 import java.net.ConnectException;
 import java.net.Socket;
-import java.util.Objects;
-
-import javax.swing.*;
 
 public class ClientRobiSwing {
 
-    private JFrame frame = null;
+    private JFrame frame;
 
     private String title = "IHM Robi";
 
@@ -224,12 +214,10 @@ public class ClientRobiSwing {
             // process le texte creer l'object et le renvoie après ducoup le serveur envoie un json j'imagine
             //TODO : Envoyer l'Objet au serveur
             // Faut utiliser Json ouip
-            Object k = new Object();
-            dis.readObject();
+            Object k = dis.readObject();
 
             socket.close();
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
@@ -243,7 +231,7 @@ public class ClientRobiSwing {
         chooser.setCurrentDirectory(fdir);
         if (chooser.showDialog(frame, "Sélection d'un fichier") == JFileChooser.APPROVE_OPTION) {
             File selected = chooser.getSelectedFile();
-            String destination = new String(selected.getParent() + File.separatorChar + selected.getName());
+            String destination = selected.getParent() + File.separatorChar + selected.getName();
             currentDir = selected.getParent();
             return (destination);
         }
@@ -294,7 +282,7 @@ public class ClientRobiSwing {
 
         try {
             UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
-        } catch (Exception e) {
+        } catch (Exception ignored) {
         }
 
         new ClientRobiSwing();

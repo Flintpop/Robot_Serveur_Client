@@ -1,7 +1,9 @@
 package exercice4;
 import graphicLayer.GElement;
+import stree.parser.SNode;
+
 public class NewElement implements Command {
-    public Expr run(Reference receiver, SNode method) {
+    public Reference run(Reference receiver, SNode method) {
         try {
             @SuppressWarnings("unchecked")
             GElement e = ((Class<GElement>)
@@ -15,6 +17,5 @@ public class NewElement implements Command {
             e.printStackTrace();
         }
         return null;
-    }
     }
 }

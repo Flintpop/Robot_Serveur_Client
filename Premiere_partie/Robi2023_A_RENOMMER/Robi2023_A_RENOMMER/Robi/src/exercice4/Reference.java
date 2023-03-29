@@ -4,8 +4,6 @@ package exercice4;
 import java.util.HashMap;
 import java.util.Map;
 
-import graphicLayer.GRect;
-import graphicLayer.GSpace;
 import stree.parser.SNode;
 
 public class Reference {
@@ -15,7 +13,7 @@ public class Reference {
 	
 	public Reference(Object receiver) {
 		this.receiver = receiver;
-		primitives = new HashMap<String, Command>();
+		primitives = new HashMap<>();
 	}
 
 	
