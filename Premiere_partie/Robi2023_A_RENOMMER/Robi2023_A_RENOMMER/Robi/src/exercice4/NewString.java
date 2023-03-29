@@ -1,6 +1,6 @@
 package exercice4;
 
-<<<<<<< Updated upstream
+
 import graphicLayer.GString;
 import stree.parser.SNode;
 
@@ -20,12 +20,4 @@ public class NewString implements Command {
 		}		
 		return null;
 	}
-=======
-public class NewString implements Command {
-
-    public void run(Reference receiver, SNode method) {
-        String str = method.get(2).contents();
-        receiver.setObject(str);
-    }
->>>>>>> Stashed changes
 }
