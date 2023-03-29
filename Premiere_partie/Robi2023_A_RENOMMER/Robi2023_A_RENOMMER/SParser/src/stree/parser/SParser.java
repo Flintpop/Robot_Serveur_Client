@@ -41,8 +41,8 @@ public class SParser<T> {
 	}
 
 	protected SParser.SHandler<T> defaulHandler() {
-		return new STreeBuilder<T>();
-	};
+		return new STreeBuilder<>();
+	}
 
 	protected int read() throws IOException {
 		int n = this.input.read();
