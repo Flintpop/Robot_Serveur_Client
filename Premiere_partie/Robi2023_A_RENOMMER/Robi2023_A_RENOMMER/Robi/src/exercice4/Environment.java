@@ -1,11 +1,22 @@
 package exercice4;
 
-public class Environment {
-    public void addReference(String space, Reference spaceRef) {
+import java.util.HashMap;
 
+public class Environment {
+	
+	HashMap<String, Reference> variables;
+	
+	public Environment() {
+		variables = new HashMap<String, Reference>();
+	}
+	
+    public void addReference(String refName, Reference ref) {
+    	if(!variables.containsKey(refName)) {
+    		variables.put(refName, ref);
+    	}
     }
 
     public Reference getReferenceByName(String receiverName) {
-        return null;
+        return variables.get(receiverName);
     }
 }

@@ -6,7 +6,7 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 
-public class GString extends GBounded {
+public class GString extends GBounded implements Positionnable {
 	Font font;
 	FontMetrics metrics;
 	String str = "";

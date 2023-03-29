@@ -9,7 +9,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-public  class GBounded extends GElement implements GContainer{
+public  class GBounded extends GElement implements GContainer, Positionnable{
 	protected Point position;
 	protected Dimension dim;
 	protected List<GElement> subElements = new ArrayList<GElement>();
