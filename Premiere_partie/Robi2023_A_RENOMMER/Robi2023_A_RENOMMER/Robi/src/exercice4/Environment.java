@@ -1,7 +1,6 @@
 package exercice4;
 
 import java.util.HashMap;
-<<<<<<< Updated upstream
 
 public class Environment {
 	
@@ -19,23 +18,5 @@ public class Environment {
 
     public Reference getReferenceByName(String receiverName) {
         return variables.get(receiverName);
-=======
-import java.util.Map;
-
-public class Environment {
-
-    Map<String,Reference> hm = new HashMap<>();
-
-    public void addReference(String name, Reference spaceRef) {
-        hm.put(name, spaceRef);
-    }
-
-    public Reference getReferenceByName(String receiverName) {
-        return hm.get(receiverName);
-    }
-
-    public void removeReference(String contents) {
-        hm.remove(contents);
->>>>>>> Stashed changes
     }
 }

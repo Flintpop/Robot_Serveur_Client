@@ -1,5 +1,6 @@
 package exercice4;
 
+
 import graphicLayer.GElement;
 import graphicLayer.GSpace;
 import stree.parser.SNode;
@@ -29,4 +30,3 @@ public class AddElement implements Command {
 
 		return null;
 	}
-}
