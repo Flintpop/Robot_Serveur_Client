@@ -25,16 +25,4 @@ public class DelElement implements Command {
 		
 		return null;
 	}
-=======
-import stree.parser.SNode;
-
-public class DelElement implements Command {
-    Environment env;
-    public DelElement(Environment env) {
-        this.env = env;
-    }
-    public void run(Reference receiver, SNode method) {
-        env.removeReference(method.get(2).contents());
-    }
->>>>>>> Stashed changes
 }
