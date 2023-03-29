@@ -36,12 +36,4 @@ public class NewImage implements Command {
 		}		
 		return null;
 	}
-=======
-import graphicLayer.GImage;
-import stree.parser.SNode;
-public class NewImage implements Command {
-    public void run(Reference receiver, SNode method) {
-
-    }
->>>>>>> Stashed changes
 }
