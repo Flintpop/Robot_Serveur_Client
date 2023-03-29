@@ -21,15 +21,15 @@ package exercice4;
 	(robi translate 0 -40) ) 
 	
 	
-(space add robi (rect.class new))
+(space add robi (Rect new))
 (robi translate 130 50)
 (robi setColor yellow)
-(space add momo (oval.class new))
+(space add momo (Oval new))
 (momo setColor red)
 (momo translate 80 80)
-(space add pif (image.class new alien.gif))
+(space add pif (Image new alien.gif))
 (pif translate 100 0)
-(space add hello (label.class new "Hello world"))
+(space add hello (Label new "Hello world"))
 (hello translate 10 10)
 (hello setColor black)
 
@@ -89,8 +89,8 @@ public class Exercice4_2_0 {
 		spaceRef.addCommand("setColor", new SetColor());
 		spaceRef.addCommand("sleep", new Sleep());
 
-		spaceRef.addCommand("add", new AddElement());
-		spaceRef.addCommand("del", new DelElement());
+		spaceRef.addCommand("add", new AddElement(environment));
+		spaceRef.addCommand("del", new DelElement(environment));
 		
 		rectClassRef.addCommand("new", new NewElement());
 		ovalClassRef.addCommand("new", new NewElement());
@@ -98,10 +98,10 @@ public class Exercice4_2_0 {
 		stringClassRef.addCommand("new", new NewString());
 
 		environment.addReference("space", spaceRef);
-		environment.addReference("rect.class", rectClassRef);
-		environment.addReference("oval.class", ovalClassRef);
-		environment.addReference("image.class", imageClassRef);
-		environment.addReference("label.class", stringClassRef);
+		environment.addReference("Rect", rectClassRef);
+		environment.addReference("Oval", ovalClassRef);
+		environment.addReference("Image", imageClassRef);
+		environment.addReference("Label", stringClassRef);
 		
 		this.mainLoop();
 	}

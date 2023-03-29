@@ -14,8 +14,8 @@ package exercice4;
 //	(space sleep 1000)
 //	(robi translate -100 0)
 //	(space sleep 1000)
-//	(robi translate 0 -40) ) 
-//
+//	(robi translate 0 -40)
+//	(space setColor black) (robi setColor yellow) (space sleep 2000) (space setColor white) (space sleep 1000) (robi setColor red) (space sleep 1000) (robi translate 100 0) (space sleep 1000) (robi translate 0 50) (space sleep 1000) (robi translate -100 0) (space sleep 1000) (robi translate 0 -40)
 
 import java.awt.Dimension;
 import java.io.IOException;
@@ -45,11 +45,14 @@ public class Exercice4_1_0 {
 
 		// Initialisation des references : on leur ajoute les primitives qu'elles
 		// comprenent
-		//
-		// <A VOUS DE CODER>
-		//
+		
+		spaceRef.addCommand("setColor", new SetColor());
+		spaceRef.addCommand("sleep", new Sleep());
+		
+		robiRef.addCommand("setColor", new SetColor());
+		robiRef.addCommand("translate", new Translate());
 
-		// Enrigestrement des references dans l'environement par leur nom
+		// Enregistrement des references dans l'environement par leur nom
 		environment.addReference("space", spaceRef);
 		environment.addReference("robi", robiRef);
 
@@ -66,12 +69,14 @@ public class Exercice4_1_0 {
 			SParser<SNode> parser = new SParser<>();
 			// compilation
 			List<SNode> compiled = null;
+			
 			try {
 				compiled = parser.parse(input);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			
 			// execution des s-expressions compilees
 			Iterator<SNode> itor = compiled.iterator();
 			while (itor.hasNext()) {

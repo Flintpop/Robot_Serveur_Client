@@ -4,7 +4,7 @@ import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Point;
 
-public class GImage extends GElement {
+public class GImage extends GElement implements Positionnable {
 	Point position;
 	Image rawImage;
 	
