@@ -1,16 +1,16 @@
 package exercice4;
 
  /*
-	(space setColor black)  
-	(robi setColor yellow) 
-	(space sleep 2000) 
-	(space setColor white)  
-	(space sleep 1000) 	
+	(space setColor black)
+	(robi setColor yellow)
+	(space sleep 2000)
+	(space setColor white)
+	(space sleep 1000)
 	(space add robi (GRect new))
 	(robi setColor green)
 	(robi translate 100 50)
 	(space del robi)
-	(robi setColor red)		  
+	(robi setColor red)
 	(space sleep 1000)
 	(robi translate 100 0)
 	(space sleep 1000)
@@ -18,10 +18,17 @@ package exercice4;
 	(space sleep 1000)
 	(robi translate -100 0)
 	(space sleep 1000)
+<<<<<<< Updated upstream
 	(robi translate 0 -40) ) 
 	
 	
 (space add robi (Rect new))
+=======
+	(robi translate 0 -40) )
+
+
+(space add robi (rect.class new))
+>>>>>>> Stashed changes
 (robi translate 130 50)
 (robi setColor yellow)
 (space add momo (Oval new))
@@ -73,6 +80,7 @@ class NewElement implements Command {
 */
 
 public class Exercice4_2_0 {
+<<<<<<< Updated upstream
 	// Une seule variable d'instance
 	Environment environment = new Environment();
 
@@ -129,9 +137,67 @@ public class Exercice4_2_0 {
 			}
 		}
 	}
+=======
+    // Une seule variable d'instance
+    Environment environment = new Environment();
+>>>>>>> Stashed changes
 
-	public static void main(String[] args) {
-		new Exercice4_2_0();
-	}
+    public Exercice4_2_0() {
+        GSpace space = new GSpace("Exercice 4", new Dimension(200, 100));
+        space.open();
+
+        Reference spaceRef = new Reference(space);
+        Reference rectClassRef = new Reference(GRect.class);
+        Reference ovalClassRef = new Reference(GOval.class);
+        Reference imageClassRef = new Reference(GImage.class);
+        Reference stringClassRef = new Reference(GString.class);
+
+        spaceRef.addCommand("setColor", new SetColor());
+        spaceRef.addCommand("sleep", new Sleep());
+
+        spaceRef.addCommand("add", new AddElement(environment));
+        spaceRef.addCommand("del", new DelElement(environment));
+
+        rectClassRef.addCommand("new", new NewElement());
+        ovalClassRef.addCommand("new", new NewElement());
+        imageClassRef.addCommand("new", new NewImage());
+        stringClassRef.addCommand("new", new NewString());
+
+        environment.addReference("space", spaceRef);
+        environment.addReference("rect.class", rectClassRef);
+        environment.addReference("oval.class", ovalClassRef);
+        environment.addReference("image.class", imageClassRef);
+        environment.addReference("label.class", stringClassRef);
+
+        this.mainLoop();
+    }
+
+    private void mainLoop() {
+        while (true) {
+            // prompt
+            System.out.print("> ");
+            // lecture d'une serie de s-expressions au clavier (return = fin de la serie)
+            String input = Tools.readKeyboard();
+            // creation du parser
+            SParser<SNode> parser = new SParser<>();
+            // compilation
+            List<SNode> compiled = null;
+            try {
+                compiled = parser.parse(input);
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            // execution des s-expressions compilees
+            Iterator<SNode> itor = Objects.requireNonNull(compiled).iterator();
+            while (itor.hasNext()) {
+                new Interpreter().compute(environment, itor.next());
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        new Exercice4_2_0();
+    }
 
 }

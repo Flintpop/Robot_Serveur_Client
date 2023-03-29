@@ -17,10 +17,12 @@ package exercice4;
 //	(robi translate 0 -40)
 //	(space setColor black) (robi setColor yellow) (space sleep 2000) (space setColor white) (space sleep 1000) (robi setColor red) (space sleep 1000) (robi translate 100 0) (space sleep 1000) (robi translate 0 50) (space sleep 1000) (robi translate -100 0) (space sleep 1000) (robi translate 0 -40)
 
-import java.awt.Dimension;
+import java.awt.*;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import graphicLayer.GRect;
 import graphicLayer.GSpace;
@@ -45,12 +47,32 @@ public class Exercice4_1_0 {
 
 		// Initialisation des references : on leur ajoute les primitives qu'elles
 		// comprenent
+<<<<<<< Updated upstream
 		
 		spaceRef.addCommand("setColor", new SetColor());
 		spaceRef.addCommand("sleep", new Sleep());
 		
 		robiRef.addCommand("setColor", new SetColor());
 		robiRef.addCommand("translate", new Translate());
+=======
+		//
+		spaceRef.addCommand("setColor", new Command() {
+			@Override
+			public void run(Reference receiver, SNode expr) {
+				((GSpace) receiver.obj).setColor(getColorByName(expr.get(2).contents()));
+			}
+		});
+
+		spaceRef.addCommand("sleep", new Command() {
+			@Override
+			public void run(Reference receiver, SNode expr) {
+				Tools.sleep(Integer.parseInt(expr.get(2).contents()));
+			}
+		});
+
+
+		//
+>>>>>>> Stashed changes
 
 		// Enregistrement des references dans l'environement par leur nom
 		environment.addReference("space", spaceRef);
@@ -83,6 +105,17 @@ public class Exercice4_1_0 {
 				this.run((SNode) itor.next());
 			}
 		}
+	}
+
+	public static Color getColorByName(String s) {
+		Map<String, Color> hm = new HashMap<>();
+		hm.put("black", Color.black);
+		hm.put("white", Color.white);
+		hm.put("red", Color.red);
+		hm.put("yellow", Color.yellow);
+		hm.put("blue", Color.blue);
+
+		return hm.get(s);
 	}
 
 	private void run(SNode expr) {

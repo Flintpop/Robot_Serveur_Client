@@ -1,5 +1,6 @@
 package exercice4;
 
+<<<<<<< Updated upstream
 import java.awt.Color;
 import java.util.HashMap;
 import java.util.Map;
@@ -32,4 +33,17 @@ public class SetColor implements Command {
 		
 		return null;
 	}
+=======
+import graphicLayer.GSpace;
+import graphicLayer.GRect;
+import stree.parser.SNode;
+
+public class SetColor implements Command {
+    public void run(Reference receiver, SNode method) {
+        if(receiver.obj instanceof GRect)
+            ((GRect) receiver.obj).setColor(Exercice4_1_0.getColorByName(method.get(2).contents()));
+        else if(receiver.obj instanceof GSpace)
+            ((GSpace) receiver.obj).setColor(Exercice4_1_0.getColorByName(method.get(2).contents()));
+    }
+>>>>>>> Stashed changes
 }
