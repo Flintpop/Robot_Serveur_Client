@@ -2,14 +2,18 @@ package exercice3;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Point;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import graphicLayer.GRect;
 import graphicLayer.GSpace;
 import stree.parser.SNode;
 import stree.parser.SParser;
+import tools.Tools;
 
 public class Exercice3_0 {
 	GSpace space = new GSpace("Exercice 3", new Dimension(200, 100));
@@ -58,7 +62,56 @@ public class Exercice3_0 {
 	}
 
 	Command getCommandFromExpr(SNode expr) {
-		return null;
+
+		Command ret = null;
+				
+		if(expr.hasChildren()) {
+			SNode n = expr.get(0);
+
+			switch(n.contents()) {
+			case "robi":
+				
+				n = expr.get(1);
+				
+				switch(n.contents()) {
+				case "translate":
+					ret = new RobiTranslate(Integer.parseInt(expr.get(2).contents()), Integer.parseInt(expr.get(3).contents()));
+					break;
+					
+				case "setColor":
+					ret = new RobiChangeColor(getColorByName(expr.get(2).contents()));
+					break;
+				}
+				
+				
+				break;
+				
+			case "space":
+				
+				n = expr.get(1);
+				
+				switch(n.contents()) {
+				case "sleep":
+					ret = new SpaceSleep(Integer.parseInt(expr.get(2).contents()));
+					break;
+					
+				case "setColor":
+					ret = new SpaceChangeColor(getColorByName(expr.get(2).contents()));
+					break;
+				}
+				
+				
+				break;
+				
+			default:
+				System.err.println("1er el inconnu");
+			}
+			
+		} else {
+			System.out.println("expression vide");
+		}
+		
+		return ret;
 	}
 
 	public static void main(String[] args) {
@@ -69,6 +122,18 @@ public class Exercice3_0 {
 		abstract public void run();
 	}
 
+	
+	Color getColorByName(String s) {
+		Map<String, Color> hm = new HashMap<>();
+		hm.put("black", Color.black);
+		hm.put("white", Color.white);
+		hm.put("red", Color.red);
+		hm.put("yellow", Color.yellow);
+		hm.put("blue", Color.blue);
+		
+		return hm.get(s);
+	}
+	
 	public class SpaceChangeColor implements Command {
 		Color newColor;
 
@@ -79,6 +144,53 @@ public class Exercice3_0 {
 		@Override
 		public void run() {
 			space.setColor(newColor);
+		}
+
+	}
+	
+	public class SpaceSleep implements Command {
+		int duration;
+
+		public SpaceSleep(int d) {
+			this.duration = d;
+		}
+
+		@Override
+		public void run() {
+			Tools.sleep(duration);
+		}
+
+	}
+	
+	
+	
+	
+	
+	
+	public class RobiChangeColor implements Command {
+		Color newColor;
+
+		public RobiChangeColor(Color newColor) {
+			this.newColor = newColor;
+		}
+
+		@Override
+		public void run() {
+			robi.setColor(newColor);
+		}
+
+	}
+	
+	public class RobiTranslate implements Command {
+		Point dcoord = robi.getPosition();
+
+		public RobiTranslate(int dx, int dy) {
+			this.dcoord.translate(dx, dy);
+		}
+
+		@Override
+		public void run() {
+			robi.setPosition(dcoord);
 		}
 
 	}
