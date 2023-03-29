@@ -47,32 +47,13 @@ public class Exercice4_1_0 {
 
 		// Initialisation des references : on leur ajoute les primitives qu'elles
 		// comprenent
-<<<<<<< Updated upstream
+
 		
 		spaceRef.addCommand("setColor", new SetColor());
 		spaceRef.addCommand("sleep", new Sleep());
 		
 		robiRef.addCommand("setColor", new SetColor());
 		robiRef.addCommand("translate", new Translate());
-=======
-		//
-		spaceRef.addCommand("setColor", new Command() {
-			@Override
-			public void run(Reference receiver, SNode expr) {
-				((GSpace) receiver.obj).setColor(getColorByName(expr.get(2).contents()));
-			}
-		});
-
-		spaceRef.addCommand("sleep", new Command() {
-			@Override
-			public void run(Reference receiver, SNode expr) {
-				Tools.sleep(Integer.parseInt(expr.get(2).contents()));
-			}
-		});
-
-
-		//
->>>>>>> Stashed changes
 
 		// Enregistrement des references dans l'environement par leur nom
 		environment.addReference("space", spaceRef);
