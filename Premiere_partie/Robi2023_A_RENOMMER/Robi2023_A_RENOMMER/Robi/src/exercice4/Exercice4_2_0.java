@@ -78,10 +78,10 @@ class NewElement implements Command {
 */
 
 public class Exercice4_2_0 {
-<<<<<<< HEAD
+
     // Une seule variable d'instance
     Environment environment = new Environment();
-=======
+
 	// Une seule variable d'instance
 	Environment environment = new Environment();
 
@@ -139,7 +139,7 @@ public class Exercice4_2_0 {
 			}
 		}
 	}
->>>>>>> main
+
 
     public Exercice4_2_0() {
         GSpace space = new GSpace("Exercice 4", new Dimension(200, 100));
