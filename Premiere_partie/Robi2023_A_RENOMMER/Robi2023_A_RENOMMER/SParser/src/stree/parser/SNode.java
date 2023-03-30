@@ -54,4 +54,7 @@ public interface SNode {
 	public void setAlien(Object alien);
 	public Object alien();
 
+	
+	public SNode clone();
+	
 }
