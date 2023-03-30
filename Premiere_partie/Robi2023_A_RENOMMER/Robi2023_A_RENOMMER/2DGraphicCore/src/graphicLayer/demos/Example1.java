@@ -11,7 +11,8 @@ import graphicLayer.GElement;
 import graphicLayer.GOval;
 import graphicLayer.GSpace;
 
-public class Example1 { 
+
+public class Example1 {
 
 	public static void main(String[] args) {
 		Random x = new Random();
@@ -20,9 +21,9 @@ public class Example1 {
 		gb.setPosition(new Point(100,100));
 		gb.setDimension(new Dimension(400, 300));
 		gb.setColor(Color.gray);
-		
+
 		w.addElement(gb);
-		
+
 		int width = gb.getWidth();
 		int height = gb.getHeight();
 		for (int i = 0; i < 2000; i++) {
