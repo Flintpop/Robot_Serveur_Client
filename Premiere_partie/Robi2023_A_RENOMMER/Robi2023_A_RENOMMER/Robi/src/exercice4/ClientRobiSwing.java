@@ -1,12 +1,18 @@
 package exercice4;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import javax.print.attribute.standard.NumberOfInterveningJobs;
 import javax.swing.*;
+import javax.xml.crypto.Data;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.*;
 import java.net.Socket;
-//import ../../../exemple_json.
+import java.util.ArrayList;
 
 public class ClientRobiSwing {
     Client client;
@@ -57,7 +63,6 @@ public class ClientRobiSwing {
         frame.setVisible(true);
 
         connectServer();
-
     }
 
 //    private void send
@@ -71,7 +76,7 @@ public class ClientRobiSwing {
         panel_button.setLayout(new GridLayout(1, 5));
 
         button_file = new Button("Fichier");
-        button_start = new Button("Start");
+        button_start = new Button("Envoi du script");
         button_stop = new Button("Stop");
         button_mode_exec = new Button(client.getExecutionModeString());
         button_exec = new Button("Execution");
@@ -82,86 +87,23 @@ public class ClientRobiSwing {
             txt_out.setText(txt_out.getText() + "fichier sélectionné : " + f + "\n");
         });
 
-        button_start.addActionListener(e -> txt_out.setText(txt_out.getText() + "clic bouton start\n"));
+        button_start.addActionListener(e -> {
+            sendScript();
+        });
 
         button_stop.addActionListener(e -> txt_out.setText(txt_out.getText() + "clic bouton stop\n"));
 
         button_mode_exec.addActionListener(e -> {
             client.changeMode();
             button_mode_exec.setLabel(client.getExecutionModeString());
+            DataCS dataCS = new DataCS();
+            dataCS.cmd = "switchMode";
+            dataCS.txt = client.getExecutionModeString();
+            sendDataServer(dataCS);
         });
 
         button_exec.addActionListener(e -> {
-            txt_out.setText(txt_out.getText() + "clic bouton rect 2\n");
-            txt_out.setText(txt_out.getText() + "attention : le scroll et le rafraichissement de l'image se sont pas gérés\n");
-
-            Graph g;
-
-            // couleurs
-            int[] couleur1 = {
-                    255, 0, 0
-            };
-            int[] couleur2 = {
-                    0, 0, 255
-            };
-
-            int[] couleur3 = {
-                    255, 0, 255
-            };
-
-            // affichage d'un rectangle
-            g = new Graph();
-            int[] positions = {
-                    10, 150, 200, 100
-            };
-            g.setCmd("fillRect");
-            g.setEntiers(positions);
-            g.setCouleurs(couleur1);
-            g.draw(graph);
-
-            // affichage texte 1
-            g = new Graph();
-            int[] positions1 = {
-                    10, 25
-            };
-            String[] textes1 = {
-                    "texte 1"
-            };
-            g.setCmd("drawString");
-            g.setEntiers(positions1);
-            g.setChaines(textes1);
-            g.setCouleurs(couleur2);
-            g.draw(graph);
-
-            // affichage texte 2
-            g = new Graph();
-            int[] positions2 = {
-                    10, 50
-            };
-            String[] textes2 = {
-                    "texte 2"
-            };
-            g.setCmd("drawString");
-            g.setEntiers(positions2);
-            g.setChaines(textes2);
-            g.setCouleurs(couleur3);
-            g.draw(graph);
-
-            // affichage texte 3 (en noir parce que la couleur n'est pas fournie)
-            g = new Graph();
-            int[] positions3 = {
-                    10, 75
-            };
-            String[] textes3 = {
-                    "texte 3"
-            };
-            g.setCmd("drawString");
-            g.setEntiers(positions3);
-            g.setChaines(textes3);
-            //g.setCouleurs(couleur3);
-            g.draw(graph);
-
-
+            sendExecuteFlag();
         });
 
         panel_button.add(button_file);
@@ -200,9 +142,51 @@ public class ClientRobiSwing {
         panel.add(panel_edit, BorderLayout.CENTER);
 
         return (panel);
-
     }
 
+    private void sendExecuteFlag() {
+        DataCS dataCS = new DataCS();
+        dataCS.cmd = "execCommand";
+        dataCS.txt = "";
+        sendDataServer(dataCS);
+    }
+
+    private void sendScript() {
+        // TODO: Il faut transformer le input du champ s_txt_in en json avec cmd = machin et txt = suite de la commande.
+        //  Le json est très relou. Ça pourrait marcher si on envoie directement le string 🤷🏻‍
+        //  On reçoit un truc comme ça
+        //      (space setColor blue)
+        //      (robi setColor red)
+        //  ou comme ça
+        //      (space setColor blue) (robi setColor red)
+        //  Ensuite on a les trucs relou comme ça :
+        //      (space add (GRect img))
+
+        // Et il faut les mettre dans les dataCS
+
+        DataCS dataCS = new DataCS();
+        dataCS.cmd = "";
+        dataCS.txt = txt_in.getText();
+        sendDataServer(dataCS);
+    }
+
+    private void sendDataServer(DataCS dataCS) {
+        System.out.println("Envoi des données :" + dataCS.toString());
+        StringWriter sw = new StringWriter();
+        try {
+            JsonGenerator generator = new JsonFactory().createGenerator(sw);
+            ObjectMapper mapper = new ObjectMapper();
+
+            generator.setCodec(mapper);
+            generator.writeObject(dataCS);
+            generator.close();
+
+            out.writeObject(sw.toString());
+        } catch (Exception e) {
+            System.err.println("Erreur sendObject");
+            e.printStackTrace();
+        }
+    }
 
     private void connectServer() {
         try {

@@ -61,7 +61,7 @@ public class Exercice2_1_0 {
         }
     }
 
-    public void printPartOfExpression(SNode expr, int i) {
+    public static void printPartOfExpression(SNode expr, int i) {
         if (i == 0) {
             System.out.print("(" + expr.get(i).contents() + " ");
         } else if (i == expr.children().size() - 1) {

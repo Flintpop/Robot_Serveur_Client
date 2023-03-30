@@ -11,6 +11,12 @@ public class Client {
         BLOCK
     }
 
+    mode executionMode = mode.BLOCK;
+
+    Client() {
+
+    }
+
     public mode getExecutionMode() {
         return executionMode;
     }
@@ -19,17 +25,11 @@ public class Client {
         this.executionMode = executionMode;
     }
 
-    mode executionMode = mode.BLOCK;
-
-    Client() {
-
-    }
-
     protected String getExecutionModeString() {
         if (executionMode == mode.BLOCK) {
             return "Block";
         }
-        return "Step by step";
+        return "Step_by_step";
     }
 
     protected void changeMode() {

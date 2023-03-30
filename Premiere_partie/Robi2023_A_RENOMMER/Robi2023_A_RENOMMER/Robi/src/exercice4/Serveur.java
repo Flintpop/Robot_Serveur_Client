@@ -40,6 +40,7 @@ package exercice4;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import exercice2.Exercice2_1_0;
 import graphicLayer.*;
 import stree.parser.SNode;
 import stree.parser.SParser;
@@ -48,22 +49,28 @@ import java.awt.*;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
 public class Serveur {
     ServerSocket serverSocket;
     Socket socket;
+    ObjectOutputStream oos;
+    ObjectInputStream ois;
 
     // Une seule variable d'instance
     Environment environment = new Environment();
 
+    List<SNode> compiled = null;
     Client.mode executionMode;
 
-	public Serveur() {
-		GSpace space = new GSpace("Exercice 4", new Dimension(200, 100));
-		space.open();
+    public Serveur() {
+        GSpace space = new GSpace("Serveur", new Dimension(200, 100));
+        space.open();
 
+        compiled = new ArrayList<>();
         Reference spaceRef = new Reference(space);
         Reference rectClassRef = new Reference(GRect.class);
         Reference ovalClassRef = new Reference(GOval.class);
@@ -92,7 +99,6 @@ public class Serveur {
     }
 
     private void mainLoop() {
-        //création du serveur
         String currentMsg;
 
         System.out.println("Serveur Robi");
@@ -100,100 +106,141 @@ public class Serveur {
             serverSocket = new ServerSocket(2000);
             socket = serverSocket.accept();
             System.out.println("Connexion de " + socket.getInetAddress());
-            ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
-            BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            oos = new ObjectOutputStream(socket.getOutputStream());
+            ois = new ObjectInputStream(socket.getInputStream());
 
             while (true) {
                 try {
-                    oos.writeObject("Bienvenue sur le serveur FTP");
-
-                    // creation du parser
+                    oos.writeObject("Bienvenue sur le serveur Robi");
 
                     currentMsg = receiveClientMsg();
+                    System.out.println("Received " + currentMsg);
 
+                    System.out.println("Processed the message");
+                    System.out.println("State of exec mode " + getExecutionMode());
+                    System.out.println("State of script :");
+                    for (int i = 0; i < compiled.size(); i++) {
+                        for (int j = 0; j < compiled.get(i).size(); j++) {
+                            Exercice2_1_0.printPartOfExpression(compiled.get(i), j);
+                        }
+                    }
                     processClientMsg(currentMsg);
-
-
-
                 } catch (IOException e) {
                     e.printStackTrace();
+                    serverSocket.close();
                 }
-                serverSocket.close();
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
-
     }
 
+    /**
+     * Envoi d'un message au client
+     * @param currentMsg Le message à envoyer
+     */
     private void processClientMsg(String currentMsg) {
+
         String[] msg = currentMsg.split(" ");
-        switch (currentMsg.split(" ")[0]) {
-            case ("switchMode"):
-                switchMode(msg);
-            case ("execCommand"):
-                executeCommand(currentMsg);
-            default:
-                receiveScript(msg);
+        if (msg[0].contains("switchMode")) {
+            switchMode(msg);
+            return;
+        } else if (msg[0].contains("execCommand")) {
+            executeCommand();
         }
+
+        receiveScript(currentMsg);
     }
 
+    /**
+     * Switch de modes entre étapes par étapes et block par block
+     * @param currentMsg
+     */
     private void switchMode(String[] currentMsg) {
-        if (currentMsg[1].equalsIgnoreCase("block")) {
+        // currentMsg[1] est le mode choisi
+        if (currentMsg[1].toLowerCase().contains("block")) {
             executionMode = Client.mode.BLOCK;
+            System.out.println("Nouveau mode d'exécution : " + getExecutionMode());
             return;
         }
 
         executionMode = Client.mode.STEP_BY_STEP;
+        System.out.println("Nouveau mode d'exécution : " + getExecutionMode());
     }
 
-    private void receiveScript(String[] currentMsg) {
-        // Je ne sais pas quoi faire ici
+    private String getExecutionMode() {
+        if (executionMode == Client.mode.STEP_BY_STEP) return "Step by step";
+        return "Block";
     }
 
+    /**
+     * Enregistrement du script compilé sous forme de List<SNode>.
+     * @param currentMsg Le message du client sous forme de string continue
+     */
+    private void receiveScript(String currentMsg) {
+        SParser<SNode> parser;
+        parser = new SParser<>();
+
+        if (compiled == null) {
+            System.err.println("Compiled est null");
+        }
+        try {
+            compiled.addAll(parser.parse(currentMsg));
+            compiled.forEach(System.out::println);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (NullPointerException chiant) {
+            System.err.println(chiant.getMessage());
+            chiant.printStackTrace();
+        }
+    }
+
+    /**
+     * Lecteur de messages du client
+     * @return Le message en forme de string continue
+     */
     private String receiveClientMsg() {
         try {
-
-            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
-            String json = in.readLine();
+            DataCS jsonData = null;
+            String json = (String) ois.readObject();
 
             if (json != null) {
-                DataCS jsonData = new ObjectMapper().readValue(json, DataCS.class);
-                System.out.println("Behold! Le JSON divin est arrivé : " + jsonData);
+                jsonData = new ObjectMapper().readValue(json, DataCS.class);
+                System.out.println("Behold! Le JSON divin est arrivé : " + jsonData.toString());
             } else {
                 System.out.println("Hélas! Le messager est arrivé les mains vides...");
             }
 
-            return jsonData.getTxt();
-        } catch (IOException e) {
+            return Objects.requireNonNull(jsonData).getCmd() + Objects.requireNonNull(jsonData).getTxt();
+        } catch (IOException | ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
-
-
-
-        return null;
     }
 
-    public void executeCommand(String commands) {
-        SParser<SNode> parser = new SParser<>();
-        // compilation
-        List<SNode> compiled = null;
-        try {
-            compiled = parser.parse(commands);
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+    /**
+     * Execute le script (Série d'S-expression) enregistré
+     */
+    public void executeCommand() {
+        // Block by block
+//        if (executionMode.equals(Client.mode.BLOCK)) {
+        if (true) {
+            for (SNode sNode : Objects.requireNonNull(compiled)) {
+                new Interpreter().compute(environment, sNode);
+            }
+            compiled.clear();
+            return;
         }
-        // execution des s-expressions compilees
-        for (SNode sNode : Objects.requireNonNull(compiled)) {
-            new Interpreter().compute(environment, sNode);
-        }
+
+        // Execution step by step
+        new Interpreter().compute(environment, Objects.requireNonNull(compiled).get(0));
+        compiled.remove(0);
     }
 
-
-    public String sendObject(Object dataSC) {
+    /**
+     * converti l'objet en JSON et l'envoie au Client
+     * @param dataSC objet à envoyer au Client
+     */
+    public void sendObject(Object dataSC) {
         StringWriter sw = new StringWriter();
         try {
             JsonGenerator generator = new JsonFactory().createGenerator(sw);
@@ -201,11 +248,12 @@ public class Serveur {
             generator.setCodec(mapper);
             generator.writeObject(dataSC);
             generator.close();
+
+            oos.writeObject(sw.toString());
         } catch (Exception e) {
+            System.err.println("Erreur sendObject");
             e.printStackTrace();
         }
-
-        return null;
     }
 
     public static void main(String[] args) {

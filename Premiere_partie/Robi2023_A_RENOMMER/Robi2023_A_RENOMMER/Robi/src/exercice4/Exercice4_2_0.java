@@ -6,7 +6,7 @@ package exercice4;
 	(space sleep 2000)
 	(space setColor white)
 	(space sleep 1000)
-	(space add robi (GRect new))
+	(space add robi (Rect new))
 	(robi setColor green)
 	(robi translate 100 50)
 	(space del robi)
@@ -105,18 +105,16 @@ public class Exercice4_2_0 {
 
     private void mainLoop() {
         while (true) {
-            // prompt
             System.out.print("> ");
-            // lecture d'une serie de s-expressions au clavier (return = fin de la serie)
+
             String input = Tools.readKeyboard();
-            // creation du parser
+
             SParser<SNode> parser = new SParser<>();
-            // compilation
+
             List<SNode> compiled = null;
             try {
                 compiled = parser.parse(input);
             } catch (IOException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
             // execution des s-expressions compilees
@@ -129,5 +127,4 @@ public class Exercice4_2_0 {
     public static void main(String[] args) {
         new Exercice4_2_0();
     }
-
 }
