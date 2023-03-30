@@ -74,5 +74,21 @@ public class SDefaultNode implements SNode {
 	public Object alien() {
 		return this.alien;
 	}
+	
+	
+	public SNode clone() {
+		SDefaultNode ret = new SDefaultNode();
+		
+		ret.setContents(this.contents());
+		ret.quote = this.quote;
+		
+		for(SNode child : this.children()) {
+			SNode childClone = child.clone();
+			childClone.setParent(ret);
+			ret.addChild(childClone);
+		}
+		
+		return ret;
+	}
 
 }
