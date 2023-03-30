@@ -1,4 +1,4 @@
-package exercice4;
+package exercice5;
 
 import java.util.HashMap;
 
@@ -7,7 +7,7 @@ public class Environment {
 	HashMap<String, Reference> variables;
 	
 	public Environment() {
-		variables = new HashMap<>();
+		variables = new HashMap<String, Reference>();
 	}
 	
     public void addReference(String refName, Reference ref) {

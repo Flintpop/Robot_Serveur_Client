@@ -1,5 +1,4 @@
-package exercice4;
-
+package exercice5;
 
 import stree.parser.SNode;
 
@@ -10,4 +9,3 @@ public interface Command {
 	// exemple de code source : "(space setColor black)"
 	abstract public Reference run(Reference ref, SNode method);
 }
-

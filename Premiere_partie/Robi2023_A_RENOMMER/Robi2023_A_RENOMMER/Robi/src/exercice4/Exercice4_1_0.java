@@ -17,9 +17,9 @@ package exercice4;
 //	(robi translate 0 -40)
 //	(space setColor black) (robi setColor yellow) (space sleep 2000) (space setColor white) (space sleep 1000) (robi setColor red) (space sleep 1000) (robi translate 100 0) (space sleep 1000) (robi translate 0 50) (space sleep 1000) (robi translate -100 0) (space sleep 1000) (robi translate 0 -40)
 
-import java.awt.Dimension;
+import java.awt.*;
 import java.io.IOException;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
 
 import graphicLayer.GRect;
@@ -45,6 +45,7 @@ public class Exercice4_1_0 {
 
 		// Initialisation des references : on leur ajoute les primitives qu'elles
 		// comprenent
+
 		
 		spaceRef.addCommand("setColor", new SetColor());
 		spaceRef.addCommand("sleep", new Sleep());
@@ -78,9 +79,8 @@ public class Exercice4_1_0 {
 			}
 			
 			// execution des s-expressions compilees
-			Iterator<SNode> itor = compiled.iterator();
-			while (itor.hasNext()) {
-				this.run((SNode) itor.next());
+			for (SNode sNode : Objects.requireNonNull(compiled)) {
+				this.run(sNode);
 			}
 		}
 	}

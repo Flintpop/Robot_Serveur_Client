@@ -1,0 +1,130 @@
+package exercice4;
+
+ /*
+	(space setColor black)
+	(robi setColor yellow)
+	(space sleep 2000)
+	(space setColor white)
+	(space sleep 1000)
+	(space add robi (GRect new))
+	(robi setColor green)
+	(robi translate 100 50)
+	(space del robi)
+	(robi setColor red)
+	(space sleep 1000)
+	(robi translate 100 0)
+	(space sleep 1000)
+	(robi translate 0 50)
+	(space sleep 1000)
+	(robi translate -100 0)
+	(space sleep 1000)
+	(robi translate 0 -40) )
+
+
+(space add robi (Rect new))
+(robi translate 130 50)
+(robi setColor yellow)
+(space add momo (Oval new))
+(momo setColor red)
+(momo translate 80 80)
+(space add pif (Image new alien.gif))
+(pif translate 100 0)
+(space add hello (Label new "Hello world"))
+(hello translate 10 10)
+(hello setColor black)
+
+(space add robi (Rect new)) (robi translate 130 50) (robi setColor yellow) (space add momo (Oval new)) (momo setColor red) (momo translate 80 80) (space add pif (Image new alien.gif)) (pif translate 100 0) (space add hello (Label new "Hello world")) (hello translate 10 10) (hello setColor black)
+*/
+
+
+import graphicLayer.*;
+import stree.parser.SNode;
+import stree.parser.SParser;
+
+import java.awt.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.List;
+import java.util.Objects;
+
+public class Serveur {
+
+    // Une seule variable d'instance
+    Environment environment = new Environment();
+
+	public Serveur() {
+		GSpace space = new GSpace("Exercice 4", new Dimension(200, 100));
+		space.open();
+
+		Reference spaceRef = new Reference(space);
+		Reference rectClassRef = new Reference(GRect.class);
+		Reference ovalClassRef = new Reference(GOval.class);
+		Reference imageClassRef = new Reference(GImage.class);
+		Reference stringClassRef = new Reference(GString.class);
+
+		spaceRef.addCommand("setColor", new SetColor());
+		spaceRef.addCommand("sleep", new Sleep());
+		spaceRef.addCommand("setDim", new SetDim());
+
+		spaceRef.addCommand("add", new AddElement(environment));
+		spaceRef.addCommand("del", new DelElement(environment));
+		
+		rectClassRef.addCommand("new", new NewElement());
+		ovalClassRef.addCommand("new", new NewElement());
+		imageClassRef.addCommand("new", new NewImage());
+		stringClassRef.addCommand("new", new NewString());
+
+		environment.addReference("space", spaceRef);
+		environment.addReference("Rect", rectClassRef);
+		environment.addReference("Oval", ovalClassRef);
+		environment.addReference("Image", imageClassRef);
+		environment.addReference("Label", stringClassRef);
+		
+		this.mainLoop();
+	}
+
+    private void mainLoop() {
+        while (true) {
+            ServerSocket serveurFTP;
+            Socket socket;
+            //création du serveur
+            try {
+                System.out.println("Le Serveur FTP");
+
+                serveurFTP = new ServerSocket(2000);
+                socket = serveurFTP.accept();
+                System.out.println("Connexion de " + socket.getInetAddress());
+                BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+                // lecture d'une serie de s-expressions au clavier (return = fin de la serie)
+                String input = br.readLine();
+                // creation du parser
+                SParser<SNode> parser = new SParser<>();
+                // compilation
+                List<SNode> compiled = null;
+                try {
+                    compiled = parser.parse(input);
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+                // execution des s-expressions compilees
+                for (SNode sNode : Objects.requireNonNull(compiled)) {
+                    new Interpreter().compute(environment, sNode);
+                }
+                serveurFTP.close();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        new Serveur();
+    }
+
+}

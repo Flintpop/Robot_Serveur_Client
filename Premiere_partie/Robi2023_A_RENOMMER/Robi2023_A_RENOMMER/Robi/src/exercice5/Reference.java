@@ -1,9 +1,10 @@
-package exercice4;
-
+package exercice5;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import graphicLayer.GRect;
+import graphicLayer.GSpace;
 import stree.parser.SNode;
 
 public class Reference {
@@ -13,7 +14,7 @@ public class Reference {
 	
 	public Reference(Object receiver) {
 		this.receiver = receiver;
-		primitives = new HashMap<>();
+		primitives = new HashMap<String, Command>();
 	}
 
 	
@@ -28,8 +29,9 @@ public class Reference {
 
 
     public void run(SNode method) {
+    	//System.out.println(method.get(0).contents() + " " + method.get(1).contents());
     	Command c = this.getCommandByName(method.get(1).contents());
-    	
+
     	c.run(this, method);
     }
 
@@ -38,5 +40,4 @@ public class Reference {
     		primitives.put(selector, primitive);
     	}
     }
-
 }

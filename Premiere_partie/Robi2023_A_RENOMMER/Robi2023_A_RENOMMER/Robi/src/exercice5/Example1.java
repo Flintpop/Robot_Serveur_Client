@@ -12,7 +12,7 @@ public class Example1 {
 	
 	public  void launch() {
 		Exercice5 exo = new Exercice5();
-		exo.oneShot(script);
+		//exo.oneShot(script);
 	}
 	
 	public static void main(String[] args) {
