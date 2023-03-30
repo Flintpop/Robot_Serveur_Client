@@ -1,5 +1,6 @@
 package exercice5;
 
+import exercice6.AddScript;
 import graphicLayer.GContainer;
 import graphicLayer.GElement;
 import graphicLayer.GSpace;
@@ -28,6 +29,8 @@ public class AddElement implements Command {
 			created.addCommand("add", new AddElement(envi));
 			created.addCommand("del", new DelElement(envi));
 		}
+		
+		created.addCommand("addScript", new AddScript(envi));
 		
 		cont.addElement( (GElement) created.receiver);
 		
