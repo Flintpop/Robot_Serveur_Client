@@ -37,92 +37,91 @@ package exercice4;
 */
 
 
-import java.awt.Dimension;
-import java.io.BufferedReader;
+import graphicLayer.*;
+import stree.parser.SNode;
+import stree.parser.SParser;
+import tools.Tools;
+
+import java.awt.*;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.util.List;
 import java.util.Objects;
 
-import graphicLayer.GImage;
-import graphicLayer.GOval;
-import graphicLayer.GRect;
-import graphicLayer.GSpace;
-import graphicLayer.GString;
-import stree.parser.SNode;
-import stree.parser.SParser;
+
+/*
+class NewElement implements Command {
+	public Reference run(Reference reference, SNode method) {
+		try {
+			@SuppressWarnings("unchecked")
+			GElement e = ((Class<GElement>) reference.getReceiver()).getDeclaredConstructor().newInstance();
+			Reference ref = new Reference(e);
+			ref.addCommand("setColor", new SetColor());
+			ref.addCommand("translate", new Translate());
+			ref.addCommand("setDim", new SetDim());
+			return ref;
+		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
+				| NoSuchMethodException | SecurityException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+}
+*/
 
 public class Exercice4_2_0 {
-
     // Une seule variable d'instance
     Environment environment = new Environment();
 
-	public Exercice4_2_0() {
-		GSpace space = new GSpace("Exercice 4", new Dimension(200, 100));
-		space.open();
+    public Exercice4_2_0() {
+        GSpace space = new GSpace("Exercice 4", new Dimension(200, 100));
+        space.open();
 
-		Reference spaceRef = new Reference(space);
-		Reference rectClassRef = new Reference(GRect.class);
-		Reference ovalClassRef = new Reference(GOval.class);
-		Reference imageClassRef = new Reference(GImage.class);
-		Reference stringClassRef = new Reference(GString.class);
+        Reference spaceRef = new Reference(space);
+        Reference rectClassRef = new Reference(GRect.class);
+        Reference ovalClassRef = new Reference(GOval.class);
+        Reference imageClassRef = new Reference(GImage.class);
+        Reference stringClassRef = new Reference(GString.class);
 
-		spaceRef.addCommand("setColor", new SetColor());
-		spaceRef.addCommand("sleep", new Sleep());
-		spaceRef.addCommand("setDim", new SetDim());
+        spaceRef.addCommand("setColor", new SetColor());
+        spaceRef.addCommand("sleep", new Sleep());
+        spaceRef.addCommand("setDim", new SetDim());
 
-		spaceRef.addCommand("add", new AddElement(environment));
-		spaceRef.addCommand("del", new DelElement(environment));
-		
-		rectClassRef.addCommand("new", new NewElement());
-		ovalClassRef.addCommand("new", new NewElement());
-		imageClassRef.addCommand("new", new NewImage());
-		stringClassRef.addCommand("new", new NewString());
+        spaceRef.addCommand("add", new AddElement(environment));
+        spaceRef.addCommand("del", new DelElement(environment));
 
-		environment.addReference("space", spaceRef);
-		environment.addReference("Rect", rectClassRef);
-		environment.addReference("Oval", ovalClassRef);
-		environment.addReference("Image", imageClassRef);
-		environment.addReference("Label", stringClassRef);
-		
-		this.mainLoop();
-	}
+        rectClassRef.addCommand("new", new NewElement());
+        ovalClassRef.addCommand("new", new NewElement());
+        imageClassRef.addCommand("new", new NewImage());
+        stringClassRef.addCommand("new", new NewString());
+
+        environment.addReference("space", spaceRef);
+        environment.addReference("Rect", rectClassRef);
+        environment.addReference("Oval", ovalClassRef);
+        environment.addReference("Image", imageClassRef);
+        environment.addReference("Label", stringClassRef);
+
+        this.mainLoop();
+    }
 
     private void mainLoop() {
         while (true) {
-            ServerSocket serveurFTP;
-            Socket socket;
-            //création du serveur
+            // prompt
+            System.out.print("> ");
+            // lecture d'une serie de s-expressions au clavier (return = fin de la serie)
+            String input = Tools.readKeyboard();
+            // creation du parser
+            SParser<SNode> parser = new SParser<>();
+            // compilation
+            List<SNode> compiled = null;
             try {
-                System.out.println("Le Serveur FTP");
-
-                serveurFTP = new ServerSocket(2000);
-                socket = serveurFTP.accept();
-                System.out.println("Connexion de " + socket.getInetAddress());
-                BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
-                // lecture d'une serie de s-expressions au clavier (return = fin de la serie)
-                String input = br.readLine();
-                // creation du parser
-                SParser<SNode> parser = new SParser<>();
-                // compilation
-                List<SNode> compiled = null;
-                try {
-                    compiled = parser.parse(input);
-                } catch (IOException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-                // execution des s-expressions compilees
-                for (SNode sNode : Objects.requireNonNull(compiled)) {
-                    new Interpreter().compute(environment, sNode);
-                }
-                serveurFTP.close();
-
+                compiled = parser.parse(input);
             } catch (IOException e) {
+                // TODO Auto-generated catch block
                 e.printStackTrace();
+            }
+            // execution des s-expressions compilees
+            for (SNode sNode : Objects.requireNonNull(compiled)) {
+                new Interpreter().compute(environment, sNode);
             }
         }
     }

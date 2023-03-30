@@ -19,10 +19,8 @@ package exercice4;
 
 import java.awt.*;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 import graphicLayer.GRect;
 import graphicLayer.GSpace;
@@ -81,22 +79,10 @@ public class Exercice4_1_0 {
 			}
 			
 			// execution des s-expressions compilees
-			Iterator<SNode> itor = compiled.iterator();
-			while (itor.hasNext()) {
-				this.run((SNode) itor.next());
+			for (SNode sNode : Objects.requireNonNull(compiled)) {
+				this.run(sNode);
 			}
 		}
-	}
-
-	public static Color getColorByName(String s) {
-		Map<String, Color> hm = new HashMap<>();
-		hm.put("black", Color.black);
-		hm.put("white", Color.white);
-		hm.put("red", Color.red);
-		hm.put("yellow", Color.yellow);
-		hm.put("blue", Color.blue);
-
-		return hm.get(s);
 	}
 
 	private void run(SNode expr) {

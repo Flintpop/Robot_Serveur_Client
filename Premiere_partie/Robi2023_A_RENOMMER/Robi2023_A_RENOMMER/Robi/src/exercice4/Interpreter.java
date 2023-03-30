@@ -10,7 +10,7 @@ public class Interpreter {
     		
     		Reference ref = environment.getReferenceByName(next.get(0).contents());
     		
-    		ref.run(next);;
+    		ref.run(next);
     		
     	}
     	

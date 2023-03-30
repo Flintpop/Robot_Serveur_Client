@@ -4,10 +4,8 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Point;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.lang.reflect.Field;
+import java.util.*;
 
 import graphicLayer.GRect;
 import graphicLayer.GSpace;
@@ -48,9 +46,8 @@ public class Exercice3_0 {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        Iterator<SNode> itor = rootNodes.iterator();
-        while (itor.hasNext()) {
-            this.run(itor.next());
+        for (SNode sNode : Objects.requireNonNull(rootNodes)) {
+            this.run(sNode);
         }
     }
 
@@ -115,19 +112,19 @@ public class Exercice3_0 {
     }
 
     public interface Command {
-        abstract public void run();
+        void run();
     }
 
 
     Color getColorByName(String s) {
-        Map<String, Color> hm = new HashMap<>();
-        hm.put("black", Color.black);
-        hm.put("white", Color.white);
-        hm.put("red", Color.red);
-        hm.put("yellow", Color.yellow);
-        hm.put("blue", Color.blue);
-
-        return hm.get(s);
+        Field field;
+        try {
+            // Récupère la couleur à partir de la chaîne de caractères
+            field = Class.forName("java.awt.Color").getField(s);
+            return (Color) field.get(null);
+        } catch (NoSuchFieldException | ClassNotFoundException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public class SpaceChangeColor implements Command {
@@ -144,7 +141,7 @@ public class Exercice3_0 {
 
     }
 
-    public class SpaceSleep implements Command {
+    public static class SpaceSleep implements Command {
         int duration;
 
         public SpaceSleep(int d) {

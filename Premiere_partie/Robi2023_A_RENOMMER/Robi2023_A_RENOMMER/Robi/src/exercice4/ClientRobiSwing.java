@@ -55,6 +55,7 @@ public class ClientRobiSwing {
         frame.setSize(800, 600);
         frame.setVisible(true);
 
+        connectServer();
     }
 
     public Component createComponents() {
@@ -93,7 +94,7 @@ public class ClientRobiSwing {
             txt_out.setText(txt_out.getText() + "clic bouton rect 2\n");
             txt_out.setText(txt_out.getText() + "attention : le scroll et le rafraichissement de l'image se sont pas gérés\n");
 
-            Graph g = null;
+            Graph g;
 
             // couleurs
             int[] couleur1 = {
@@ -196,7 +197,6 @@ public class ClientRobiSwing {
         panel.add(panel_button, BorderLayout.NORTH);
         panel.add(panel_edit, BorderLayout.CENTER);
 
-        connectServer();
         return (panel);
 
     }

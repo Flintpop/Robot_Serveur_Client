@@ -21,7 +21,7 @@ public class Graph {
 		Graphics g = co.getGraphics();
 		
 		try {
-			Class c = Graphics.class;
+			Class<Graphics> c = Graphics.class;
 			
 			// si 4 params de type int
 			// Method m1 = c.getDeclaredMethod(cmd,int.class,int.class,int.class,int.class);

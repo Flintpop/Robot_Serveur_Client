@@ -17,8 +17,8 @@ public class Exercice2_1_0 {
     GSpace space = new GSpace("Exercice 2_1", new Dimension(200, 100));
     GRect robi = new GRect();
     //    String script = "(space setColor black) (robi setColor yellow)";
-    String script = "(space color white) (robi color red) (robi translate 10 0) (space sleep 100) (" +
-            "robi translate 0 10) (space sleep 100) (robi translate -10 0) (space sleep 100) (robi translate 0 -10)";
+    String script = "(space color white) (robi color red) (robi translate 10 0) (space sleep 2000) (" +
+            "robi translate 0 10) (space sleep 2000) (robi translate -10 0) (space sleep 2000) (robi translate 0 -10)";
 
     public Exercice2_1_0() {
         space.addElement(robi);
@@ -98,7 +98,7 @@ public class Exercice2_1_0 {
     }
 
     private void executeRobiTranslate(SNode expr) {
-        robi.setPosition(new Point(Integer.parseInt(expr.get(2).contents()), Integer.parseInt(expr.get(3).contents())));
+        robi.translate(new Point(Integer.parseInt(expr.get(2).contents()), Integer.parseInt(expr.get(3).contents())));
     }
 
     private void executeRobiColor(SNode expr) {
