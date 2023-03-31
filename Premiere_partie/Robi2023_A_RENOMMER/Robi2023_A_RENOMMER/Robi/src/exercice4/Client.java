@@ -1,8 +1,13 @@
 package exercice4;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.ConnectException;
 import java.net.Socket;
+import java.util.Objects;
 
 public class Client {
 
@@ -77,6 +82,8 @@ public class Client {
         }
         return null;
     }
+
+
 
 
 }

@@ -4,15 +4,17 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import javax.print.attribute.standard.NumberOfInterveningJobs;
+import javax.imageio.ImageIO;
 import javax.swing.*;
-import javax.xml.crypto.Data;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.Socket;
-import java.util.ArrayList;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.Objects;
 
 public class ClientRobiSwing {
     Client client;
@@ -104,6 +106,8 @@ public class ClientRobiSwing {
 
         button_exec.addActionListener(e -> {
             sendExecuteFlag();
+
+            displayScreeshot(lireImage(Objects.requireNonNull(receiveDataServer())));
         });
 
         panel_button.add(button_file);
@@ -119,9 +123,11 @@ public class ClientRobiSwing {
         txt_in = new JTextPane();
         txt_in.setEditable(true);
         txt_in.setFont(courierFont);
+        txt_in.setText("(space setColor black)");
         s_txt_in = new JScrollPane();
         s_txt_in.setPreferredSize(new Dimension(640, 480));
         s_txt_in.getViewport().add(txt_in);
+
 
         txt_out = new JTextPane();
         txt_out.setEditable(true);
@@ -152,22 +158,72 @@ public class ClientRobiSwing {
     }
 
     private void sendScript() {
-        // TODO: Il faut transformer le input du champ s_txt_in en json avec cmd = machin et txt = suite de la commande.
-        //  Le json est très relou. Ça pourrait marcher si on envoie directement le string 🤷🏻‍
-        //  On reçoit un truc comme ça
-        //      (space setColor blue)
-        //      (robi setColor red)
-        //  ou comme ça
-        //      (space setColor blue) (robi setColor red)
-        //  Ensuite on a les trucs relou comme ça :
-        //      (space add (GRect img))
-
-        // Et il faut les mettre dans les dataCS
-
         DataCS dataCS = new DataCS();
         dataCS.cmd = "";
         dataCS.txt = txt_in.getText();
         sendDataServer(dataCS);
+    }
+
+    private void displayScreeshot(BufferedImage img) {
+        // affichage d'un rectangle
+//        Graph g = new Graph();
+//        int [] positions = {
+//                10, 150, 200, 100
+//        };
+//        //g.setCmd();
+//        g.setCmd("drawString");
+//        g.setEntiers(positions);
+//        int [] couleur1 = {
+//                255, 0 , 0
+//        };
+//        //g.setCouleurs(couleur1);
+//
+        ImagePanel imagePanel = new ImagePanel(img);
+//        ImageComponent imageComponent = new ImageComponent(img, 10, 150);
+//        graph.add(imageComponent);
+//        g.draw(imageComponent);
+        BlackImagePanel blackImagePanel = new BlackImagePanel(300, 200);
+
+        // Créez un JFrame et ajoutez-y le BlackImagePanel
+        JFrame frame2 = new JFrame("Exemple Image Noire");
+        frame2.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame2.getContentPane().add(imagePanel);
+        frame2.setSize(300, 200);
+        frame2.setLocationRelativeTo(null); // Centre la fenêtre sur l'écran
+        frame2.setVisible(true);
+    }
+
+    private String receiveDataServer() {
+        try {
+            DataSC jsonData;
+            String json = (String) in.readObject();
+
+            if (json == null) {
+                System.out.println("Hélas! Le messager est arrivé les mains vides...");
+                return null;
+            }
+
+            jsonData = new ObjectMapper().readValue(json, DataSC.class);
+            System.out.println("Behold! Le JSON divin est arrivé : " + jsonData.toString());
+
+            return jsonData.getIm();
+        } catch (IOException | ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public BufferedImage lireImage(String img) {
+        // Convertissez la chaîne en tableau d'octets
+        byte[] imageEnOctets = Base64.getDecoder().decode(img);
+
+        // Créez un ByteArrayInputStream à partir du tableau d'octets
+        ByteArrayInputStream bais = new ByteArrayInputStream(imageEnOctets);
+
+        try {
+            return ImageIO.read(bais);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void sendDataServer(DataCS dataCS) {
@@ -225,3 +281,55 @@ public class ClientRobiSwing {
 
 }
 
+class ImagePanel extends JPanel {
+    private BufferedImage image;
+
+    public ImagePanel(BufferedImage image) {
+        this.image = image;
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        if (image != null) {
+            g.drawImage(image, 0, 0, this);
+        }
+    }
+}
+
+class ImageComponent extends JComponent {
+    private BufferedImage image;
+    private int x;
+    private int y;
+
+    public ImageComponent(BufferedImage image, int x, int y) {
+        this.image = image;
+        this.x = x;
+        this.y = y;
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        if (image != null) {
+            g.drawImage(image, x, y, this);
+        }
+    }
+}
+
+class BlackImagePanel extends JPanel {
+    private BufferedImage blackImage;
+
+    public BlackImagePanel(int width, int height) {
+        blackImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        Graphics g = blackImage.getGraphics();
+        g.setColor(Color.BLACK);
+        g.fillRect(0, 0, width, height);
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        g.drawImage(blackImage, 0, 0, this);
+    }
+}

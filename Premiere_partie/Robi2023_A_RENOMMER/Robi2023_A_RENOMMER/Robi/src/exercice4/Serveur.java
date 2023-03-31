@@ -45,14 +45,16 @@ import graphicLayer.*;
 import stree.parser.SNode;
 import stree.parser.SParser;
 
+import javax.imageio.ImageIO;
+import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
+import java.awt.Robot;
 import java.util.List;
-import java.util.Objects;
 
 public class Serveur {
     ServerSocket serverSocket;
@@ -65,9 +67,9 @@ public class Serveur {
 
     List<SNode> compiled = null;
     Client.mode executionMode;
-
+    GSpace space;
     public Serveur() {
-        GSpace space = new GSpace("Serveur", new Dimension(200, 100));
+        space = new GSpace("Serveur", new Dimension(200, 100));
         space.open();
 
         compiled = new ArrayList<>();
@@ -110,30 +112,50 @@ public class Serveur {
             ois = new ObjectInputStream(socket.getInputStream());
 
             while (true) {
-                try {
-                    oos.writeObject("Bienvenue sur le serveur Robi");
+                //                    oos.writeObject("Bienvenue sur le serveur Robi");
 
-                    currentMsg = receiveClientMsg();
-                    System.out.println("Received " + currentMsg);
+                currentMsg = receiveClientMsg();
+                System.out.println("Received " + currentMsg);
 
-                    System.out.println("Processed the message");
-                    System.out.println("State of exec mode " + getExecutionMode());
-                    System.out.println("State of script :");
-                    for (int i = 0; i < compiled.size(); i++) {
-                        for (int j = 0; j < compiled.get(i).size(); j++) {
-                            Exercice2_1_0.printPartOfExpression(compiled.get(i), j);
-                        }
+                System.out.println("Processed the message");
+                System.out.println("State of exec mode " + getExecutionMode());
+                System.out.println("State of script :");
+                for (SNode sNode : compiled) {
+                    for (int j = 0; j < sNode.size(); j++) {
+                        Exercice2_1_0.printPartOfExpression(sNode, j);
                     }
-                    processClientMsg(currentMsg);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    serverSocket.close();
                 }
+                processClientMsg(currentMsg);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
+
+    public BufferedImage screenshot(Component component) {
+        BufferedImage image = new BufferedImage(component.getWidth(), component.getHeight(), BufferedImage.TYPE_INT_RGB);
+        component.paint(image.getGraphics());
+        return image;
+    }
+
+    private ByteArrayOutputStream getByteScreenshot(DataSC dataSC) {
+        try{
+            space.open();
+
+            BufferedImage image = screenshot(space);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ImageIO.write(image, "jpg", baos);
+            return baos;
+        } catch (IOException e) {
+            System.err.println("Erreur à la conversion en base64");
+            e.printStackTrace();
+        } catch (Exception e) {
+            System.err.println("Erreur inconnue dans getByteScreenshot");
+            System.err.println(e.getMessage());
+            e.printStackTrace();
+        }
+        return null;
+}
 
     /**
      * Envoi d'un message au client
@@ -223,9 +245,11 @@ public class Serveur {
     public void executeCommand() {
         // Block by block
 //        if (executionMode.equals(Client.mode.BLOCK)) {
+        // TODO: Remettre le if comme avant
         if (true) {
             for (SNode sNode : Objects.requireNonNull(compiled)) {
                 new Interpreter().compute(environment, sNode);
+                sendObject(new DataSC());
             }
             compiled.clear();
             return;
@@ -234,14 +258,19 @@ public class Serveur {
         // Execution step by step
         new Interpreter().compute(environment, Objects.requireNonNull(compiled).get(0));
         compiled.remove(0);
+        sendObject(new DataSC());
     }
 
     /**
      * converti l'objet en JSON et l'envoie au Client
      * @param dataSC objet à envoyer au Client
      */
-    public void sendObject(Object dataSC) {
+    public void sendObject(DataSC dataSC) {
         StringWriter sw = new StringWriter();
+        ByteArrayOutputStream baos = getByteScreenshot(dataSC);
+        dataSC.txt = sw.toString();
+        dataSC.im = Base64.getEncoder().encodeToString(Objects.requireNonNull(baos).toByteArray());
+        dataSC.cmd = "";
         try {
             JsonGenerator generator = new JsonFactory().createGenerator(sw);
             ObjectMapper mapper = new ObjectMapper();
@@ -261,3 +290,5 @@ public class Serveur {
     }
 
 }
+
+
