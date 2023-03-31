@@ -129,7 +129,17 @@ public class ClientRobiSwing {
         txt_in = new JTextPane();
         txt_in.setEditable(true);
         txt_in.setFont(courierFont);
-        txt_in.setText("(space setColor black)");
+        txt_in.setText("(space add robi (Rect new))\n" +
+                "(robi translate 130 50)\n" +
+                "(robi setColor yellow)\n" +
+                "(space add momo (Oval new))\n" +
+                "(momo setColor red)\n" +
+                "(momo translate 80 80)\n" +
+                "(space add pif (Image new alien.gif))\n" +
+                "(pif translate 100 0)\n" +
+                "(space add hello (Label new \"Hello world\"))\n" +
+                "(hello translate 10 10)\n" +
+                "(hello setColor black)\n");
         s_txt_in = new JScrollPane();
         s_txt_in.setPreferredSize(new Dimension(640, 480));
         s_txt_in.getViewport().add(txt_in);
