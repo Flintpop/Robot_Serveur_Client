@@ -65,11 +65,17 @@ public class ClientRobiSwing {
         frame.setVisible(true);
 
         connectServer();
+        DataCS initSwitchMode = new DataCS();
+        initSwitchMode.cmd = "switchMode";
+        initSwitchMode.txt = client.getExecutionModeString();
+        sendDataServer(initSwitchMode);
     }
 
-//    private void send
-
-
+    /**
+     * Création des composants de l'IHM
+     *
+     * @return
+     */
     public Component createComponents() {
         JPanel panel = new JPanel();
 
@@ -267,57 +273,4 @@ public class ClientRobiSwing {
         new ClientRobiSwing();
     }
 
-}
-
-class ImagePanel extends JPanel {
-    private BufferedImage image;
-
-    public ImagePanel(BufferedImage image) {
-        this.image = image;
-    }
-
-    @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        if (image != null) {
-            g.drawImage(image, 0, 0, this);
-        }
-    }
-}
-
-class ImageComponent extends JComponent {
-    private BufferedImage image;
-    private int x;
-    private int y;
-
-    public ImageComponent(BufferedImage image, int x, int y) {
-        this.image = image;
-        this.x = x;
-        this.y = y;
-    }
-
-    @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        if (image != null) {
-            g.drawImage(image, x, y, this);
-        }
-    }
-}
-
-class BlackImagePanel extends JPanel {
-    private BufferedImage blackImage;
-
-    public BlackImagePanel(int width, int height) {
-        blackImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-        Graphics g = blackImage.getGraphics();
-        g.setColor(Color.BLACK);
-        g.fillRect(0, 0, width, height);
-    }
-
-    @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        g.drawImage(blackImage, 0, 0, this);
-    }
 }

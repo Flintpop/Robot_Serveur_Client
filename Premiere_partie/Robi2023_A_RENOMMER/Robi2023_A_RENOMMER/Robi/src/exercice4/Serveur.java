@@ -65,7 +65,7 @@ public class Serveur {
     // Une seule variable d'instance
     Environment environment = new Environment();
 
-    List<SNode> compiled = null;
+    List<SNode> compiled;
     Client.mode executionMode;
     GSpace space;
     public Serveur() {
@@ -117,6 +117,13 @@ public class Serveur {
                 currentMsg = receiveClientMsg();
                 System.out.println("Received " + currentMsg);
 
+                if (currentMsg == null) {
+                    System.err.println("Message null");
+                    continue;
+                }
+
+                processClientMsg(currentMsg);
+
                 System.out.println("Processed the message");
                 System.out.println("State of exec mode " + getExecutionMode());
                 System.out.println("State of script :");
@@ -124,9 +131,9 @@ public class Serveur {
                     for (int j = 0; j < sNode.size(); j++) {
                         Exercice2_1_0.printPartOfExpression(sNode, j);
                     }
+                    System.out.println();
                 }
                 System.out.println();
-                processClientMsg(currentMsg);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -168,6 +175,7 @@ public class Serveur {
             return;
         } else if (msg[0].contains("execCommand")) {
             executeCommand();
+            return;
         }
 
         receiveScript(currentMsg);
@@ -175,7 +183,7 @@ public class Serveur {
 
     /**
      * Switch de modes entre étapes par étapes et block par block
-     * @param currentMsg
+     * @param currentMsg Le message du client sous forme de tableau de string
      */
     private void switchMode(String[] currentMsg) {
         // currentMsg[1] est le mode choisi
@@ -207,7 +215,6 @@ public class Serveur {
         }
         try {
             compiled.addAll(parser.parse(currentMsg));
-            compiled.forEach(System.out::println);
         } catch (IOException e) {
             e.printStackTrace();
         } catch (NullPointerException chiant) {
@@ -222,17 +229,24 @@ public class Serveur {
      */
     private String receiveClientMsg() {
         try {
-            DataCS jsonData = null;
+            DataCS jsonData;
             String json = (String) ois.readObject();
 
-            if (json != null) {
-                jsonData = new ObjectMapper().readValue(json, DataCS.class);
-                System.out.println("Behold! Le JSON divin est arrivé : " + jsonData.toString());
-            } else {
-                System.out.println("Hélas! Le messager est arrivé les mains vides...");
+            jsonData = new ObjectMapper().readValue(json, DataCS.class);
+
+            if (jsonData == null) {
+                System.err.println("jsonData est null");
+                System.err.println("Hélas! Le messager est arrivé les mains vides...");
+                return null;
             }
 
-            return Objects.requireNonNull(jsonData).getCmd() + Objects.requireNonNull(jsonData).getTxt();
+            System.out.println("Behold! Le JSON divin est arrivé : " + jsonData);
+
+            if (jsonData.cmd.equals("switchMode")) {
+                return jsonData.cmd + " " + jsonData.txt;
+            }
+
+            return jsonData.getCmd() + jsonData.getTxt();
         } catch (IOException | ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
@@ -242,10 +256,12 @@ public class Serveur {
      * Execute le script (Série d'S-expression) enregistré
      */
     public void executeCommand() {
-        // Block by block
-//        if (executionMode.equals(Client.mode.BLOCK)) {
-        // TODO: Remettre le if comme avant
-        if (true) {
+        if (compiled.size() == 0) {
+            System.err.println("Compiled est vide");
+            return;
+        }
+
+        if (executionMode.equals(Client.mode.BLOCK)) {
             for (SNode sNode : Objects.requireNonNull(compiled)) {
                 new Interpreter().compute(environment, sNode);
                 sendObject(new DataSC());
