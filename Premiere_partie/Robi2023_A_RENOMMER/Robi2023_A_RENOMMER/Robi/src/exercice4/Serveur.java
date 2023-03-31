@@ -46,15 +46,15 @@ import stree.parser.SNode;
 import stree.parser.SParser;
 
 import javax.imageio.ImageIO;
-import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.*;
-import java.awt.Robot;
+import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
+import java.util.Objects;
 
 public class Serveur {
     ServerSocket serverSocket;
@@ -125,6 +125,7 @@ public class Serveur {
                         Exercice2_1_0.printPartOfExpression(sNode, j);
                     }
                 }
+                System.out.println();
                 processClientMsg(currentMsg);
             }
         } catch (IOException e) {
@@ -140,8 +141,6 @@ public class Serveur {
 
     private ByteArrayOutputStream getByteScreenshot(DataSC dataSC) {
         try{
-            space.open();
-
             BufferedImage image = screenshot(space);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ImageIO.write(image, "jpg", baos);

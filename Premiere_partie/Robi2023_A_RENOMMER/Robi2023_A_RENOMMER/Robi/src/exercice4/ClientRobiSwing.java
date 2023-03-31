@@ -12,14 +12,13 @@ import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.Objects;
 
 public class ClientRobiSwing {
     Client client;
     private Socket socket;
 
+    private BufferedImage image;
     private ObjectOutputStream out;
     private ObjectInputStream in;
 
@@ -30,6 +29,7 @@ public class ClientRobiSwing {
     private Font dialogFont = new Font("Dialog", Font.PLAIN, 12);
     private Font courierFont = new Font("Courier", Font.PLAIN, 12);
 
+    private JPanel panel_edit = null;
     private Button button_file = null;
     private Button button_start = null;
     private Button button_stop = null;
@@ -107,7 +107,7 @@ public class ClientRobiSwing {
         button_exec.addActionListener(e -> {
             sendExecuteFlag();
 
-            displayScreeshot(lireImage(Objects.requireNonNull(receiveDataServer())));
+            displayScreeshot(lireImage(receiveDataServer()));
         });
 
         panel_button.add(button_file);
@@ -117,7 +117,7 @@ public class ClientRobiSwing {
         panel_button.add(button_exec);
 
         // zones d'affichage ou de saisie
-        JPanel panel_edit = new JPanel();
+        panel_edit = new JPanel();
         panel_edit.setLayout(new GridLayout(1, 3));
 
         txt_in = new JTextPane();
@@ -137,7 +137,15 @@ public class ClientRobiSwing {
         s_txt_out.getViewport().add(txt_out);
 
         graph = new JComponent() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                if (image != null) {
+                    g.drawImage(image, 0, 0, this);
+                }
+            }
         };
+
 
         panel_edit.add(s_txt_in);
         panel_edit.add(s_txt_out);
@@ -165,36 +173,15 @@ public class ClientRobiSwing {
     }
 
     private void displayScreeshot(BufferedImage img) {
-        // affichage d'un rectangle
-//        Graph g = new Graph();
-//        int [] positions = {
-//                10, 150, 200, 100
-//        };
-//        //g.setCmd();
-//        g.setCmd("drawString");
-//        g.setEntiers(positions);
-//        int [] couleur1 = {
-//                255, 0 , 0
-//        };
-//        //g.setCouleurs(couleur1);
-//
-        ImagePanel imagePanel = new ImagePanel(img);
-//        ImageComponent imageComponent = new ImageComponent(img, 10, 150);
-//        graph.add(imageComponent);
-//        g.draw(imageComponent);
-        BlackImagePanel blackImagePanel = new BlackImagePanel(300, 200);
-
-        // Créez un JFrame et ajoutez-y le BlackImagePanel
-        JFrame frame2 = new JFrame("Exemple Image Noire");
-        frame2.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame2.getContentPane().add(imagePanel);
-        frame2.setSize(300, 200);
-        frame2.setLocationRelativeTo(null); // Centre la fenêtre sur l'écran
-        frame2.setVisible(true);
+        image = img;
+        graph.repaint();
+        graph.revalidate();
     }
+
 
     private String receiveDataServer() {
         try {
+            // TODO: Bug il faut 2 appels pour recevoir le message suivant au tout premier appel
             DataSC jsonData;
             String json = (String) in.readObject();
 
@@ -253,6 +240,7 @@ public class ClientRobiSwing {
             e.printStackTrace();
         }
     }
+
 
     public String selectionnerFichier() {
         JFileChooser chooser = new JFileChooser();
