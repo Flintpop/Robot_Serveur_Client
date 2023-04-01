@@ -12,6 +12,9 @@ import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Base64;
 
 /**
@@ -29,6 +32,7 @@ public class ClientRobiSwing {
     private final JFrame frame;
 
     private final String title = "IHM Robi";
+
 
     @SuppressWarnings("unused")
     private final Font dialogFont = new Font("Dialog", Font.PLAIN, 12);
@@ -101,6 +105,14 @@ public class ClientRobiSwing {
             txt_out.setText(txt_out.getText() + "sélection d'un fichier\n");
             String f = selectionnerFichier();
             txt_out.setText(txt_out.getText() + "fichier sélectionné : " + f + "\n");
+
+            try {
+                String contentFile = getFileContent(f);
+                System.out.println("contentFile = " + contentFile);
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+
         });
 
         button_start.addActionListener(e -> sendScript());
@@ -179,6 +191,28 @@ public class ClientRobiSwing {
         panel.add(panel_edit, BorderLayout.CENTER);
 
         return (panel);
+    }
+
+
+    private String getFileContent(String f) throws IOException {
+        String res = "";
+
+        //byte[] encoded = Files.readAllBytes(Paths.get(f));
+        //res = new String(encoded, StandardCharsets.UTF_8);
+
+        try(BufferedReader br = new BufferedReader(new FileReader(f))) {
+            StringBuilder sb = new StringBuilder();
+            String line = br.readLine();
+
+            while (line != null) {
+                sb.append(line);
+                sb.append(System.lineSeparator());
+                line = br.readLine();
+            }
+            res = sb.toString();
+        }
+
+        return res;
     }
 
     /**
