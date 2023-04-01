@@ -13,10 +13,6 @@ public class Client {
 
     mode executionMode = mode.BLOCK;
 
-    Client() {
-
-    }
-
     public mode getExecutionMode() {
         return executionMode;
     }
@@ -25,6 +21,10 @@ public class Client {
         this.executionMode = executionMode;
     }
 
+    /**
+     * Renvoie une chaîne de caractères représentant le mode d'exécution du client.
+     * @return Une chaîne de caractères représentant le mode d'exécution du client.
+     */
     protected String getExecutionModeString() {
         if (executionMode == mode.BLOCK) {
             return "Block";
@@ -32,6 +32,10 @@ public class Client {
         return "Step_by_step";
     }
 
+    /**
+     * Change le mode d'exécution du client.
+     * Les variables d'état sont modifiées.
+     */
     protected void changeMode() {
         if (executionMode == mode.STEP_BY_STEP) {
             executionMode = mode.BLOCK;
@@ -40,6 +44,11 @@ public class Client {
         executionMode = mode.STEP_BY_STEP;
     }
 
+    /**
+     * Connecte le client au serveur avec de multiples tentatives.
+     * @param port Le port du serveur
+     * @return Un socket connecté
+     */
     public static Socket connectToServer(int port) {
         Socket socket;
         int attempts = 0;
@@ -53,7 +62,7 @@ public class Client {
     }
 
     /**
-     * Essaie de se connecter au serveur via un socket TCP.
+     * Tente de se connecter au serveur via un socket TCP.
      *
      * @param port Le port du serveur
      * @return Un socket connecté ou non

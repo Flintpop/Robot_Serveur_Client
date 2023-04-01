@@ -14,20 +14,25 @@ import java.io.*;
 import java.net.Socket;
 import java.util.Base64;
 
+/**
+ * Client RobiSwing. IHM pour le client. Permet de saisir des expressions ROBI et de les envoyer au serveur.
+ * Reçoit les résultats et les affiche.
+ */
+@SuppressWarnings("FieldCanBeLocal")
 public class ClientRobiSwing {
     Client client;
     private Socket socket;
-
     private BufferedImage image;
     private ObjectOutputStream out;
     private ObjectInputStream in;
 
-    private JFrame frame;
+    private final JFrame frame;
 
-    private String title = "IHM Robi";
+    private final String title = "IHM Robi";
 
-    private Font dialogFont = new Font("Dialog", Font.PLAIN, 12);
-    private Font courierFont = new Font("Courier", Font.PLAIN, 12);
+    @SuppressWarnings("unused")
+    private final Font dialogFont = new Font("Dialog", Font.PLAIN, 12);
+    private final Font courierFont = new Font("Courier", Font.PLAIN, 12);
 
     private JPanel panel_edit = null;
     private Button button_file = null;
@@ -35,8 +40,7 @@ public class ClientRobiSwing {
     private Button button_stop = null;
     private Button button_mode_exec = null;
     private Button button_exec = null;
-
-    private JTextPane txt_in = null; // saisie expressions ROBI
+    private JTextPane txt_in = null; // saisies expressions ROBI
     private JScrollPane s_txt_in = null;
 
     private JTextPane txt_out = null; // affichage des résultats
@@ -46,6 +50,10 @@ public class ClientRobiSwing {
 
     private String currentDir = ".";
 
+    /**
+     * Initialisation de l'IHM. Création des composants. Affichage de la fenêtre. Connexion au serveur.
+     * Envoi du mode d'exécution au serveur (block par défaut).
+     */
     public ClientRobiSwing() {
         frame = new JFrame(title);
         client = new Client();
@@ -72,9 +80,9 @@ public class ClientRobiSwing {
     }
 
     /**
-     * Création des composants de l'IHM
+     * Création des composants de l'IHM, et ajout des listeners.
      *
-     * @return
+     * @return le composant principal de l'IHM
      */
     public Component createComponents() {
         JPanel panel = new JPanel();
@@ -95,9 +103,7 @@ public class ClientRobiSwing {
             txt_out.setText(txt_out.getText() + "fichier sélectionné : " + f + "\n");
         });
 
-        button_start.addActionListener(e -> {
-            sendScript();
-        });
+        button_start.addActionListener(e -> sendScript());
 
         button_stop.addActionListener(e -> txt_out.setText(txt_out.getText() + "clic bouton stop\n"));
 
@@ -113,7 +119,7 @@ public class ClientRobiSwing {
         button_exec.addActionListener(e -> {
             sendExecuteFlag();
 
-            displayScreeshot(lireImage(receiveDataServer()));
+            displayScreenshot(lireImage(receiveDataServer()));
         });
 
         panel_button.add(button_file);
@@ -152,6 +158,9 @@ public class ClientRobiSwing {
         s_txt_out.getViewport().add(txt_out);
 
         graph = new JComponent() {
+            /**
+             * Endroit où repose l'affichage de l'image reçue du serveur.
+             */
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
@@ -160,7 +169,6 @@ public class ClientRobiSwing {
                 }
             }
         };
-
 
         panel_edit.add(s_txt_in);
         panel_edit.add(s_txt_out);
@@ -173,6 +181,9 @@ public class ClientRobiSwing {
         return (panel);
     }
 
+    /**
+     * Envoie au serveur le flag qui indique qu'il faut exécuter le script.
+     */
     private void sendExecuteFlag() {
         DataCS dataCS = new DataCS();
         dataCS.cmd = "execCommand";
@@ -180,6 +191,9 @@ public class ClientRobiSwing {
         sendDataServer(dataCS);
     }
 
+    /**
+     * Envoie au serveur le script à exécuter.
+     */
     private void sendScript() {
         DataCS dataCS = new DataCS();
         dataCS.cmd = "";
@@ -187,16 +201,23 @@ public class ClientRobiSwing {
         sendDataServer(dataCS);
     }
 
-    private void displayScreeshot(BufferedImage img) {
+    /**
+     * Affiche l'image reçue du serveur.
+     * @param img l'image à afficher
+     */
+    private void displayScreenshot(BufferedImage img) {
         image = img;
         graph.repaint();
         graph.revalidate();
     }
 
-
+    /**
+     * Reçoit les données du serveur. Les données sont reçues sous forme de chaîne de caractères.
+     * En l'occurrence le serveur envoie forcément une image encodée en base64.
+     * @return l'image reçue du serveur
+     */
     private String receiveDataServer() {
         try {
-            // TODO: Bug il faut 2 appels pour recevoir le message suivant au tout premier appel
             DataSC jsonData;
             String json = (String) in.readObject();
 
@@ -214,6 +235,11 @@ public class ClientRobiSwing {
         }
     }
 
+    /**
+     * Lit une image encodée en base64.
+     * @param img l'image encodée en base64 en string
+     * @return l'image en BufferedImage
+     */
     public BufferedImage lireImage(String img) {
         // Convertissez la chaîne en tableau d'octets
         byte[] imageEnOctets = Base64.getDecoder().decode(img);
@@ -228,9 +254,14 @@ public class ClientRobiSwing {
         }
     }
 
+    /**
+     * Envoie les données, commandes ici, au serveur.
+     * @param dataCS les données à envoyer en JSON
+     */
     private void sendDataServer(DataCS dataCS) {
         System.out.println("Envoi des données :" + dataCS.toString());
         StringWriter sw = new StringWriter();
+        //noinspection DuplicatedCode
         try {
             JsonGenerator generator = new JsonFactory().createGenerator(sw);
             ObjectMapper mapper = new ObjectMapper();
@@ -246,6 +277,9 @@ public class ClientRobiSwing {
         }
     }
 
+    /**
+     * Connecte le client au serveur.
+     */
     private void connectServer() {
         try {
             socket = Client.connectToServer(2000);
@@ -256,12 +290,15 @@ public class ClientRobiSwing {
         }
     }
 
-
+    /**
+     * Sélectionne un fichier.
+     * @return le chemin du fichier sélectionné
+     */
     public String selectionnerFichier() {
         JFileChooser chooser = new JFileChooser();
         chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-        File fdir = new File(currentDir);
-        chooser.setCurrentDirectory(fdir);
+        File fileDirectory = new File(currentDir);
+        chooser.setCurrentDirectory(fileDirectory);
         if (chooser.showDialog(frame, "Sélection d'un fichier") == JFileChooser.APPROVE_OPTION) {
             File selected = chooser.getSelectedFile();
             String destination = selected.getParent() + File.separatorChar + selected.getName();
@@ -270,7 +307,6 @@ public class ClientRobiSwing {
         }
         return ("");
     }
-
 
     public static void main(String[] args) {
 
