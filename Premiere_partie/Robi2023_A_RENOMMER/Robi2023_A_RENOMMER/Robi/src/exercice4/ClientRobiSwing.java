@@ -12,9 +12,6 @@ import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Base64;
 
 /**
@@ -32,7 +29,6 @@ public class ClientRobiSwing {
     private final JFrame frame;
 
     private final String title = "IHM Robi";
-
 
     @SuppressWarnings("unused")
     private final Font dialogFont = new Font("Dialog", Font.PLAIN, 12);
@@ -53,6 +49,7 @@ public class ClientRobiSwing {
     private JComponent graph = null; // affichage graphique
 
     private String currentDir = ".";
+    private Button button_clear = null;
 
     /**
      * Initialisation de l'IHM. Création des composants. Affichage de la fenêtre. Connexion au serveur.
@@ -61,11 +58,11 @@ public class ClientRobiSwing {
     public ClientRobiSwing() {
         frame = new JFrame(title);
         client = new Client();
+
         Component contents = createComponents();
         frame.getContentPane().add(contents);
         // frame.setJMenuBar(bar);
 
-        // Finish setting up the frame, and show it.
         frame.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
                 System.exit(0);
@@ -77,10 +74,24 @@ public class ClientRobiSwing {
         frame.setVisible(true);
 
         connectServer();
+
+        enableButtons();
+
+        // Init mode d'exécution au serveur
+        sendCurrentSwitchMode();
+    }
+
+    private void sendCurrentSwitchMode() {
         DataCS initSwitchMode = new DataCS();
         initSwitchMode.cmd = "switchMode";
         initSwitchMode.txt = client.getExecutionModeString();
         sendDataServer(initSwitchMode);
+        String oldExecutionMode;
+        oldExecutionMode = "Block";
+        if (client.getExecutionModeString().equals("Block")) {
+            oldExecutionMode = "Step by Step";
+        }
+        writeLog("Envoi du changement de mode d'exécution : " + client.getExecutionModeString() + " -> " + oldExecutionMode);
     }
 
     /**
@@ -98,8 +109,11 @@ public class ClientRobiSwing {
         button_file = new Button("Fichier");
         button_start = new Button("Envoi du script");
         button_stop = new Button("Stop");
+        button_clear = new Button("Clear");
         button_mode_exec = new Button(client.getExecutionModeString());
         button_exec = new Button("Execution");
+
+        disableButtons();
 
         button_file.addActionListener(e -> {
             txt_out.setText(txt_out.getText() + "sélection d'un fichier\n");
@@ -119,13 +133,15 @@ public class ClientRobiSwing {
 
         button_stop.addActionListener(e -> txt_out.setText(txt_out.getText() + "clic bouton stop\n"));
 
+        button_clear.addActionListener(e -> {
+            txt_out.setText("");
+            writeLog("Effacement de la zone de log");
+        });
+
         button_mode_exec.addActionListener(e -> {
             client.changeMode();
             button_mode_exec.setLabel(client.getExecutionModeString());
-            DataCS dataCS = new DataCS();
-            dataCS.cmd = "switchMode";
-            dataCS.txt = client.getExecutionModeString();
-            sendDataServer(dataCS);
+            sendCurrentSwitchMode();
         });
 
         button_exec.addActionListener(e -> {
@@ -139,6 +155,7 @@ public class ClientRobiSwing {
         panel_button.add(button_stop);
         panel_button.add(button_mode_exec);
         panel_button.add(button_exec);
+        panel_button.add(button_clear);
 
         // zones d'affichage ou de saisie
         panel_edit = new JPanel();
@@ -195,7 +212,7 @@ public class ClientRobiSwing {
 
 
     private String getFileContent(String f) throws IOException {
-        String res = "";
+        String res;
 
         byte[] encoded = Files.readAllBytes(Paths.get(f));
         res = new String(encoded, StandardCharsets.UTF_8);
@@ -211,6 +228,10 @@ public class ClientRobiSwing {
         dataCS.cmd = "execCommand";
         dataCS.txt = "";
         sendDataServer(dataCS);
+
+        if (client.getExecutionModeString().equals("Block")) {
+            writeLog("Exécution du script");
+        }
     }
 
     /**
@@ -221,10 +242,12 @@ public class ClientRobiSwing {
         dataCS.cmd = "";
         dataCS.txt = txt_in.getText();
         sendDataServer(dataCS);
+        writeLog("Script envoyé au serveur");
     }
 
     /**
      * Affiche l'image reçue du serveur.
+     *
      * @param img l'image à afficher
      */
     private void displayScreenshot(BufferedImage img) {
@@ -236,6 +259,7 @@ public class ClientRobiSwing {
     /**
      * Reçoit les données du serveur. Les données sont reçues sous forme de chaîne de caractères.
      * En l'occurrence le serveur envoie forcément une image encodée en base64.
+     *
      * @return l'image reçue du serveur
      */
     private String receiveDataServer() {
@@ -255,10 +279,12 @@ public class ClientRobiSwing {
         } catch (IOException | ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
+
     }
 
     /**
      * Lit une image encodée en base64.
+     *
      * @param img l'image encodée en base64 en string
      * @return l'image en BufferedImage
      */
@@ -278,10 +304,10 @@ public class ClientRobiSwing {
 
     /**
      * Envoie les données, commandes ici, au serveur.
+     *
      * @param dataCS les données à envoyer en JSON
      */
     private void sendDataServer(DataCS dataCS) {
-        System.out.println("Envoi des données :" + dataCS.toString());
         StringWriter sw = new StringWriter();
         //noinspection DuplicatedCode
         try {
@@ -310,10 +336,37 @@ public class ClientRobiSwing {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        writeLog("Connexion au serveur réussie.");
+    }
+
+    private void writeLog(String s) {
+        txt_out.setText(txt_out.getText() + s + " \n");
+    }
+
+    /**
+     * Active tous les boutons de l'IHM.
+     */
+    private void enableButtons() {
+        button_file.setEnabled(true);
+        button_start.setEnabled(true);
+        button_stop.setEnabled(true);
+        button_mode_exec.setEnabled(true);
+        button_exec.setEnabled(true);
+        button_clear.setEnabled(true);
+    }
+
+    private void disableButtons() {
+        button_file.setEnabled(false);
+        button_start.setEnabled(false);
+        button_stop.setEnabled(false);
+        button_mode_exec.setEnabled(false);
+        button_exec.setEnabled(false);
     }
 
     /**
      * Sélectionne un fichier.
+     *
      * @return le chemin du fichier sélectionné
      */
     public String selectionnerFichier() {
