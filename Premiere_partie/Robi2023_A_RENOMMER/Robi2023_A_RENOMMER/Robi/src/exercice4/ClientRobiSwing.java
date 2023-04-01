@@ -144,7 +144,6 @@ public class ClientRobiSwing {
         s_txt_in.setPreferredSize(new Dimension(640, 480));
         s_txt_in.getViewport().add(txt_in);
 
-
         txt_out = new JTextPane();
         txt_out.setEditable(true);
         txt_out.setFont(courierFont);

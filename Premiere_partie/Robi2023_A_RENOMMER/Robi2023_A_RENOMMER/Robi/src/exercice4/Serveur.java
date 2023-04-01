@@ -112,8 +112,6 @@ public class Serveur {
             ois = new ObjectInputStream(socket.getInputStream());
 
             while (true) {
-                //                    oos.writeObject("Bienvenue sur le serveur Robi");
-
                 currentMsg = receiveClientMsg();
                 System.out.println("Received " + currentMsg);
 
@@ -128,9 +126,8 @@ public class Serveur {
                 System.out.println("State of exec mode " + getExecutionMode());
                 System.out.println("State of script :");
                 for (SNode sNode : compiled) {
-                    for (int j = 0; j < sNode.size(); j++) {
-                        Exercice2_1_0.printPartOfExpression(sNode, j);
-                    }
+                    if(printExpression(sNode, false))
+                        System.out.print(")");
                     System.out.println();
                 }
                 System.out.println();
@@ -140,13 +137,23 @@ public class Serveur {
         }
     }
 
+    private boolean printExpression(SNode sNode, boolean printParenthesis) {
+        for (int i = 0; i < sNode.size(); i++) {
+            if (sNode.get(i).isLeaf()) {
+                Exercice2_1_0.printPartOfExpression(sNode, i);
+            } else {
+                printParenthesis = printExpression(sNode.get(i), true);
+            }
+        }
+        return printParenthesis;
+    }
     public BufferedImage screenshot(Component component) {
         BufferedImage image = new BufferedImage(component.getWidth(), component.getHeight(), BufferedImage.TYPE_INT_RGB);
         component.paint(image.getGraphics());
         return image;
     }
 
-    private ByteArrayOutputStream getByteScreenshot(DataSC dataSC) {
+    private ByteArrayOutputStream getByteScreenshot() {
         try{
             BufferedImage image = screenshot(space);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -258,14 +265,15 @@ public class Serveur {
     public void executeCommand() {
         if (compiled.size() == 0) {
             System.err.println("Compiled est vide");
+            sendObject(new DataSC());
             return;
         }
 
         if (executionMode.equals(Client.mode.BLOCK)) {
             for (SNode sNode : Objects.requireNonNull(compiled)) {
                 new Interpreter().compute(environment, sNode);
-                sendObject(new DataSC());
             }
+            sendObject(new DataSC());
             compiled.clear();
             return;
         }
@@ -282,7 +290,7 @@ public class Serveur {
      */
     public void sendObject(DataSC dataSC) {
         StringWriter sw = new StringWriter();
-        ByteArrayOutputStream baos = getByteScreenshot(dataSC);
+        ByteArrayOutputStream baos = getByteScreenshot();
         dataSC.txt = sw.toString();
         dataSC.im = Base64.getEncoder().encodeToString(Objects.requireNonNull(baos).toByteArray());
         dataSC.cmd = "";
@@ -303,7 +311,6 @@ public class Serveur {
     public static void main(String[] args) {
         new Serveur();
     }
-
 }
 
 
