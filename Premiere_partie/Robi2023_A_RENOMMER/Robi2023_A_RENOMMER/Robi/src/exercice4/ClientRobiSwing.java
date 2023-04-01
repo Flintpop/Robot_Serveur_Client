@@ -108,7 +108,7 @@ public class ClientRobiSwing {
 
             try {
                 String contentFile = getFileContent(f);
-                System.out.println("contentFile = " + contentFile);
+                txt_in.setText(contentFile);
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
@@ -197,20 +197,8 @@ public class ClientRobiSwing {
     private String getFileContent(String f) throws IOException {
         String res = "";
 
-        //byte[] encoded = Files.readAllBytes(Paths.get(f));
-        //res = new String(encoded, StandardCharsets.UTF_8);
-
-        try(BufferedReader br = new BufferedReader(new FileReader(f))) {
-            StringBuilder sb = new StringBuilder();
-            String line = br.readLine();
-
-            while (line != null) {
-                sb.append(line);
-                sb.append(System.lineSeparator());
-                line = br.readLine();
-            }
-            res = sb.toString();
-        }
+        byte[] encoded = Files.readAllBytes(Paths.get(f));
+        res = new String(encoded, StandardCharsets.UTF_8);
 
         return res;
     }
