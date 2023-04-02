@@ -27,7 +27,7 @@ public class SetColor implements Command {
 	public Reference run(Reference ref, SNode method) {
 		Field field;
 		try {
-			// Récupère la couleur à partir de la chaîne de caractères
+			// Récupère un des champs de la classe Color à partir de la chaîne de caractères, si il existe
 			field = Class.forName("java.awt.Color").getField(method.get(2).contents());
 		} catch (NoSuchFieldException e) {
 			System.err.println("ERREUR : nom de couleur inexistant");

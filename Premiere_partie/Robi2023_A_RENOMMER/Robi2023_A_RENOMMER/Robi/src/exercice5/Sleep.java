@@ -18,8 +18,10 @@ public class Sleep implements Command {
 	@Override
 	public Reference run(Reference ref, SNode method) {
 		try {
+			
 			int sTime = Integer.parseInt(method.get(2).contents());
 			Tools.sleep(sTime);
+			
 		} catch (IndexOutOfBoundsException e) {
 			System.err.println("ERREUR : mise en sommeil impossible, absence d'argument");
 		} catch(NumberFormatException e) {

@@ -21,6 +21,7 @@ public class SetDim implements Command {
 	@Override
 	public Reference run(Reference ref, SNode method) {
 		try {
+			
 			if(ref.receiver instanceof GBounded) {
 				GBounded b = (GBounded) ref.receiver;
 				Dimension d = new Dimension(Integer.parseInt(method.get(2).contents()), Integer.parseInt(method.get(3).contents()));
@@ -32,6 +33,7 @@ public class SetDim implements Command {
 				Dimension d = new Dimension(Integer.parseInt(method.get(2).contents()), Integer.parseInt(method.get(3).contents()));
 				s.changeWindowSize(d);
 			}
+			
 		} catch (IndexOutOfBoundsException e) {
 			System.err.println("ERREUR : mise a jour des dimensions impossible, absence de la valeur y");
 		} catch (NumberFormatException e) {
