@@ -2,7 +2,7 @@ package stree.parser;
 
 import java.util.List;
 
-public interface SNode {
+public interface SNode extends Cloneable {
 
 	Boolean isLeaf();
 

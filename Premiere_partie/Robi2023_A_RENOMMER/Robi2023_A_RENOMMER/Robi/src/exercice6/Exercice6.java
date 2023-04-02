@@ -48,6 +48,8 @@ public class Exercice6 {
 		spaceRef.addCommand("del", new DelElement(environment));
 		spaceRef.addCommand("addScript", new AddScript(environment));
 		
+		AddScript a;
+		
 		rectClassRef.addCommand("new", new NewElement());
 		ovalClassRef.addCommand("new", new NewElement());
 		imageClassRef.addCommand("new", new NewImage());
