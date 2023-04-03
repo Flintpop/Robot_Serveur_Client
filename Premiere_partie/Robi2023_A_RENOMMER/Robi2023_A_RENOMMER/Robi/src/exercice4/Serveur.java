@@ -1,45 +1,8 @@
 package exercice4;
 
- /*
-    (space setColor black)
-    (robi setColor yellow)
-    (space sleep 2000)
-    (space setColor white)
-    (space sleep 1000)
-    (space add robi (GRect new))
-    (robi setColor green)
-    (robi translate 100 50)
-    (space del robi)
-    (robi setColor red)
-    (space sleep 1000)
-    (robi translate 100 0)
-    (space sleep 1000)
-    (robi translate 0 50)
-    (space sleep 1000)
-    (robi translate -100 0)
-    (space sleep 1000)
-    (robi translate 0 -40) )
-
-
-(space add robi (Rect new))
-(robi translate 130 50)
-(robi setColor yellow)
-(space add momo (Oval new))
-(momo setColor red)
-(momo translate 80 80)
-(space add pif (Image new alien.gif))
-(pif translate 100 0)
-(space add hello (Label new "Hello world"))
-(hello translate 10 10)
-(hello setColor black)
-
-(space add robi (Rect new)) (robi translate 130 50) (robi setColor yellow) (space add momo (Oval new)) (momo setColor red) (momo translate 80 80) (space add pif (Image new alien.gif)) (pif translate 100 0) (space add hello (Label new "Hello world")) (hello translate 10 10) (hello setColor black)
-*/
-
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import exercice2.Exercice2_1_0;
 import graphicLayer.*;
 import stree.parser.SNode;
 import stree.parser.SParser;
@@ -67,6 +30,7 @@ public class Serveur {
 
     Environment environment = new Environment();
     List<SNode> compiled;
+    String currentExecutedScript;
     Client.mode executionMode;
     GSpace space;
 
@@ -79,6 +43,7 @@ public class Serveur {
         space.open();
 
         compiled = new ArrayList<>();
+        currentExecutedScript = "";
         Reference spaceRef = new Reference(space);
         Reference rectClassRef = new Reference(GRect.class);
         Reference ovalClassRef = new Reference(GOval.class);
@@ -134,7 +99,7 @@ public class Serveur {
 
                 processClientMsg(currentMsg);
 
-                printCurrentState();
+                printCurrentState(currentMsg);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -144,34 +109,23 @@ public class Serveur {
     /**
      * Affiche l'état actuel du serveur.
      */
-    private void printCurrentState() {
-        System.out.println("State of exec mode " + getExecutionMode());
-        System.out.println("State of script :");
-        for (SNode sNode : compiled) {
-            if (printExpression(sNode, false))
-                System.out.print(")");
+    private void printCurrentState(String currentMsg) {
+        if (currentMsg.contains("switchMode")) {
+            System.out.println("State of exec mode " + getExecutionMode());
             System.out.println();
+            return;
         }
-        System.out.println();
-    }
 
-    /**
-     * Affiche une expression (souvent contenue dans un script)
-     *
-     * @param sNode            : l'expression à afficher
-     * @param printParenthesis : indique si on doit afficher une parenthèse fermante ou non
-     * @return : true si on doit afficher une parenthèse fermante, false sinon
-     */
-    private boolean printExpression(SNode sNode, boolean printParenthesis) {
-        for (int i = 0; i < sNode.size(); i++) {
-            if (sNode.get(i).isLeaf()) {
-                Exercice2_1_0.printPartOfExpression(sNode, i);
-            } else {
-                printParenthesis = printExpression(sNode.get(i), true);
+        if (!currentMsg.contains("execCommand")) {
+            System.out.println("Current script stored : ");
+            for (SNode sNode : compiled) {
+                if (outputSNodeText.printExpression(sNode, false))
+                    System.out.print(")");
+                System.out.println();
             }
         }
-        return printParenthesis;
     }
+
 
     /**
      * Fais une capture d'écran de la fenêtre graphique
@@ -275,6 +229,8 @@ public class Serveur {
             System.err.println(chiant.getMessage());
             chiant.printStackTrace();
         }
+
+        sendObject(new DataSC());
     }
 
     /**
@@ -321,13 +277,13 @@ public class Serveur {
             for (SNode sNode : Objects.requireNonNull(compiled)) {
                 new Interpreter().compute(environment, sNode);
             }
+            currentExecutedScript = outputSNodeText.getSNodeExpressionString(compiled);
             sendObject(new DataSC());
-            compiled.clear();
-            return;
         }
 
         // Execution step by step
         new Interpreter().compute(environment, Objects.requireNonNull(compiled).get(0));
+        currentExecutedScript = outputSNodeText.getSNodeExpressionString(compiled.subList(0, 1));
         compiled.remove(0);
         sendObject(new DataSC());
     }
@@ -340,7 +296,9 @@ public class Serveur {
     public void sendObject(DataSC dataSC) {
         StringWriter sw = new StringWriter();
         ByteArrayOutputStream baos = getByteScreenshot();
-        dataSC.txt = sw.toString();
+        dataSC.txt = currentExecutedScript;
+        dataSC.SNode = outputSNodeText.getSNodeExpressionString(compiled);
+        dataSC.env = environment.getEnvString();
         dataSC.im = Base64.getEncoder().encodeToString(Objects.requireNonNull(baos).toByteArray());
         dataSC.cmd = "";
         try {
@@ -351,6 +309,7 @@ public class Serveur {
             generator.close();
 
             oos.writeObject(sw.toString());
+            currentExecutedScript = "";
         } catch (Exception e) {
             System.err.println("Erreur sendObject");
             e.printStackTrace();
@@ -361,5 +320,3 @@ public class Serveur {
         new Serveur();
     }
 }
-
-

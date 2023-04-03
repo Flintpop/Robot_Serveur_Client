@@ -4,6 +4,17 @@ public class DataSC {
     String cmd = null;
     String txt = null;
     String im = null;
+    String env = null;
+    String SNode = null;
+
+
+    public String getEnv() {
+        return env;
+    }
+
+    public void setEnv(String env) {
+        this.env = env;
+    }
 
     public String getCmd() {
         return cmd;

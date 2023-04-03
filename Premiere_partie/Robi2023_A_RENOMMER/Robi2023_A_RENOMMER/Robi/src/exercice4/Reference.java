@@ -1,10 +1,10 @@
 package exercice4;
 
 
+import stree.parser.SNode;
+
 import java.util.HashMap;
 import java.util.Map;
-
-import stree.parser.SNode;
 
 public class Reference {
 
@@ -39,4 +39,8 @@ public class Reference {
     	}
     }
 
+	@Override
+	public String toString() {
+		return receiver.getClass().getName();
+	}
 }
