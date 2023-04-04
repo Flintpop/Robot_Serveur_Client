@@ -88,6 +88,8 @@ public class Serveur {
             oos = new ObjectOutputStream(socket.getOutputStream());
             ois = new ObjectInputStream(socket.getInputStream());
 
+            sendObject(new DataSC());
+
             while (true) {
                 currentMsg = receiveClientMsg();
                 System.out.println("Received " + currentMsg);
@@ -174,12 +176,53 @@ public class Serveur {
         if (msg[0].contains("switchMode")) {
             switchMode(msg);
             return;
-        } else if (msg[0].contains("execCommand")) {
+        }
+
+        if (msg[0].contains("execCommand")) {
             executeCommand();
             return;
         }
 
+        if (msg[0].contains("stop")) {
+            stopExecution();
+            return;
+        }
+
         receiveScript(currentMsg);
+    }
+
+    private void stopExecution() {
+        compiled.clear();
+        currentExecutedScript = "";
+        System.out.println("Reset du serveur");
+
+        space.clear();
+        environment = new Environment();
+        Reference spaceRef = new Reference(space);
+        Reference rectClassRef = new Reference(GRect.class);
+        Reference ovalClassRef = new Reference(GOval.class);
+        Reference imageClassRef = new Reference(GImage.class);
+        Reference stringClassRef = new Reference(GString.class);
+
+        spaceRef.addCommand("setColor", new SetColor());
+        spaceRef.addCommand("sleep", new Sleep());
+        spaceRef.addCommand("setDim", new SetDim());
+
+        spaceRef.addCommand("add", new AddElement(environment));
+        spaceRef.addCommand("del", new DelElement(environment));
+
+        rectClassRef.addCommand("new", new NewElement());
+        ovalClassRef.addCommand("new", new NewElement());
+        imageClassRef.addCommand("new", new NewImage());
+        stringClassRef.addCommand("new", new NewString());
+
+        environment.addReference("space", spaceRef);
+        environment.addReference("Rect", rectClassRef);
+        environment.addReference("Oval", ovalClassRef);
+        environment.addReference("Image", imageClassRef);
+        environment.addReference("Label", stringClassRef);
+
+        sendObject(new DataSC());
     }
 
     /**
@@ -278,7 +321,9 @@ public class Serveur {
                 new Interpreter().compute(environment, sNode);
             }
             currentExecutedScript = outputSNodeText.getSNodeExpressionString(compiled);
+            compiled.clear();
             sendObject(new DataSC());
+            return;
         }
 
         // Execution step by step

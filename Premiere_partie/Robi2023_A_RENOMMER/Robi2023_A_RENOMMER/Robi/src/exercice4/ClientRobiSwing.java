@@ -42,6 +42,7 @@ public class ClientRobiSwing {
     private Button button_file = null;
     private Button button_send_script = null;
     private Button button_mode_exec = null;
+    private Button button_stop = null;
     private Button button_exec = null;
     private JTextPane txt_in = null; // saisies expressions ROBI
     private JScrollPane s_txt_in = null;
@@ -86,9 +87,19 @@ public class ClientRobiSwing {
         enableButtons();
 
         // Init mode d'exécution au serveur
-        sendCurrentSwitchMode();
+        DataCS initSwitchMode = new DataCS();
+        initSwitchMode.cmd = "switchMode";
+        initSwitchMode.txt = client.getExecutionModeString();
+        sendDataServer(initSwitchMode);
+        writeLog("Initialisation du mode d'exécution : " + client.getExecutionModeString());
+
+        writeLog("Réception de l'environnement et du SNode");
+        receiveDataServer();
     }
 
+    /**
+     * Envoi du mode d'exécution au serveur.
+     */
     private void sendCurrentSwitchMode() {
         DataCS initSwitchMode = new DataCS();
         initSwitchMode.cmd = "switchMode";
@@ -96,10 +107,10 @@ public class ClientRobiSwing {
         sendDataServer(initSwitchMode);
         String oldExecutionMode;
         oldExecutionMode = "Block";
-        if (client.getExecutionModeString().equals("Block")) {
+        if (client.getExecutionModeString().equalsIgnoreCase("Block")) {
             oldExecutionMode = "Step by Step";
         }
-        writeLog("Envoi du changement de mode d'exécution : " + client.getExecutionModeString() + " -> " + oldExecutionMode);
+        writeLog("Envoi du changement de mode d'exécution : " + oldExecutionMode + " -> " + client.getExecutionModeString());
     }
 
     /**
@@ -117,16 +128,17 @@ public class ClientRobiSwing {
 
         button_file = new Button("Fichier");
         button_send_script = new Button("Envoi du script");
-        button_clear = new Button("Clear");
+        button_stop = new Button("Reset environnement et SNode");
+        button_clear = new Button("Clear Log");
         button_mode_exec = new Button(client.getExecutionModeString());
         button_exec = new Button("Execution");
 
         disableButtons();
 
-
         panel_button.add(button_file);
         panel_button.add(button_send_script);
         panel_button.add(button_clear);
+        panel_button.add(button_stop);
         panel_button.add(button_mode_exec);
         panel_button.add(button_exec);
 
@@ -331,6 +343,7 @@ public class ClientRobiSwing {
         button_file.setEnabled(true);
         button_send_script.setEnabled(true);
         button_mode_exec.setEnabled(true);
+        button_stop.setEnabled(true);
         button_exec.setEnabled(true);
         button_clear.setEnabled(true);
     }
@@ -338,8 +351,10 @@ public class ClientRobiSwing {
     private void disableButtons() {
         button_file.setEnabled(false);
         button_send_script.setEnabled(false);
+        button_stop.setEnabled(false);
         button_mode_exec.setEnabled(false);
         button_exec.setEnabled(false);
+        button_clear.setEnabled(false);
     }
 
     /**
@@ -378,6 +393,10 @@ public class ClientRobiSwing {
 
         button_send_script.addActionListener(e -> sendScript());
 
+        button_stop.addActionListener(e -> {
+            sendStopFlag();
+            writeLog("Arrêt du script");
+        });
         button_clear.addActionListener(e -> txt_out.setText(""));
 
         button_mode_exec.addActionListener(e -> {
@@ -401,6 +420,22 @@ public class ClientRobiSwing {
                 writeLog("Ligne : " + data.getTxt() + " exécutée");
             }
         });
+    }
+
+    private void sendStopFlag() {
+        DataCS dataCS = new DataCS();
+        dataCS.cmd = "stop";
+        dataCS.txt = "";
+        sendDataServer(dataCS);
+
+        DataSC data = receiveDataServer();
+        if (data == null) {
+            writeLog("Erreur de communication avec le serveur");
+            return;
+        }
+
+        writeLog("Suppression des données d'environnement et de script du serveur");
+        displayScreenshot(lireImage(data.getIm()));
     }
 
     private void createTextAreas() {
@@ -448,10 +483,8 @@ public class ClientRobiSwing {
 
         try {
             UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
-        } catch (Exception ignored) {
-        }
+        } catch (Exception ignored) {}
 
         new ClientRobiSwing();
     }
-
 }

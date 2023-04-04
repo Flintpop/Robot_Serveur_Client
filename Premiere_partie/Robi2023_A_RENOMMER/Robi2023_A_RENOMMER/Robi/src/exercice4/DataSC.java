@@ -5,8 +5,16 @@ public class DataSC {
     String txt = null;
     String im = null;
     String env = null;
-    String SNode = null;
 
+    public String getSNode() {
+        return SNode;
+    }
+
+    public void setSNode(String SNode) {
+        this.SNode = SNode;
+    }
+
+    String SNode = null;
 
     public String getEnv() {
         return env;
