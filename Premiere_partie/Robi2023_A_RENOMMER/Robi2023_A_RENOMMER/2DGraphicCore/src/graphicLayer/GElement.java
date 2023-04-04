@@ -37,6 +37,10 @@ public abstract class GElement  {
 		repaint();		
 	}
 	
+	public Color getColor () {
+		return color;		
+	}
+	
 	public void dispatchMouseClicked(MouseEvent e) {}
 	public void dispatchMousePressed(MouseEvent e) {}
 	public void dispatchMouseReleased(MouseEvent e) {}

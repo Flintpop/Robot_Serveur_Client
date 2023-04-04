@@ -353,7 +353,36 @@ public class Serveur {
             generator.writeObject(dataSC);
             generator.close();
 
-            oos.writeObject(sw.toString());
+            List<Graph> lg = new List<Graph>();
+            
+            for(Reference ref : environment.variables.values()) {
+                if(ref.getReceiver() instanceof GBounded) {
+                    GBounded obj = (GBounded) ref.getReceiver();
+                    Graph g = new Graph();
+                    Color c = obj.getColor();
+                    
+                    g.setCmd("fillRect");
+                    g.setEntiers(new int[] {obj.getX(), obj.getY(), obj.getWidth(), obj.getHeight()});
+                    g.setCouleurs(new int[] {c.getRed(), c.getGreen(), c.getBlue()} );
+                    
+                    lg.add(g);
+                }
+                if(ref.getReceiver() instanceof GString) {
+                    GBounded obj = (GBounded) ref.getReceiver();
+                    Graph g = new Graph();
+                    Color c = obj.getColor();
+                    
+                    g.setCmd("drawString");
+                    g.setEntiers(new int[] {obj.getX(), obj.getY(), obj.getWidth(), obj.getHeight()});
+                    g.setCouleurs(new int[] {c.getRed(), c.getGreen(), c.getBlue()} );
+                    
+                    lg.add(g);
+                    continue;
+                }
+            }
+            
+            oos.writeObject(lg);
+            //oos.writeObject(sw.toString());
             currentExecutedScript = "";
         } catch (Exception e) {
             System.err.println("Erreur sendObject");
