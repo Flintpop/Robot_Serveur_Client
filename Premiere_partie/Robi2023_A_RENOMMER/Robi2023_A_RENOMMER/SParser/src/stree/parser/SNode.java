@@ -50,11 +50,12 @@ public interface SNode extends Cloneable {
 		else
 			visitor.visitNode(this);
 	}
-	
+
 	public void setAlien(Object alien);
 	public Object alien();
 
-	
+
 	public SNode clone();
-	
+
 }
+

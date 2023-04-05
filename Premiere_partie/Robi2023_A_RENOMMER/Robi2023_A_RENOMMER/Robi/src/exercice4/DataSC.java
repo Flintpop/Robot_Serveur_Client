@@ -7,7 +7,6 @@ public class DataSC {
     String env = null;
     String SNode = null;
 
-
     public String getEnv() {
         return env;
     }
