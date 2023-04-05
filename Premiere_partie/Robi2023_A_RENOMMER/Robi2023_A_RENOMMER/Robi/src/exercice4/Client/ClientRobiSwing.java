@@ -44,7 +44,7 @@ public class ClientRobiSwing {
     protected JTextPane txt_out = null; // affichage des résultats
     private JScrollPane s_txt_out = null;
 
-    private JComponent graph = null; // affichage graphique
+    protected JComponent graph = null; // affichage graphique
 
     private String currentDir = ".";
     protected Button button_clear = null;
@@ -237,6 +237,22 @@ public class ClientRobiSwing {
         s_txt_out.getViewport().add(txt_out);
     }
 
+    protected void clear() {
+        // Obtenez la largeur et la hauteur de la zone graphique
+        int width = graph.getWidth();
+        int height = graph.getHeight();
+
+        // Définissez la couleur de fond
+        Color c = graph.getBackground();
+
+        Graph g2 = new Graph();
+        g2.setCmd("drawRect");
+        g2.setCouleurs(new int[]{c.getRed(), c.getGreen(), c.getBlue()});
+        g2.setEntiers(new int[]{0, 0, width, height});
+
+        // Dessinez un rectangle rempli de la couleur de fond sur toute la zone graphique
+        g2.draw(graph);
+    }
 
     public String getInputText() {
         return txt_in.getText();

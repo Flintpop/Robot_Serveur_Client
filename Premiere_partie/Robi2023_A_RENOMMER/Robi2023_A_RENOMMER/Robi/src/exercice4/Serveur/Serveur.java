@@ -1,15 +1,16 @@
-package exercice4;
+package exercice4.Serveur;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import exercice4.Client.Client;
+import exercice4.Serveur.Interpreteur.*;
 import graphicLayer.*;
 import stree.parser.SNode;
 import stree.parser.SParser;
 import stree.parser.SSyntaxError;
 
 import javax.imageio.ImageIO;
-import javax.swing.text.Position;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
@@ -17,7 +18,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
 
@@ -26,7 +26,6 @@ import java.util.Objects;
  * Il est aussi capable de renvoyer des images au client.
  */
 public class Serveur {
-    int n = 0;
     ServerSocket serverSocket;
     Socket socket;
     ObjectOutputStream oos;
@@ -81,6 +80,7 @@ public class Serveur {
      * Cette méthode scan les commandes reçues du client et les exécute. Les commandes peuvent être :
      * - "switchMode" : permet de passer du mode d'exécution "step by step" au mode d'exécution "block"
      * - "execCommand" : permet d'exécuter une commande ou un script (en fonction du mode)
+     * - "stop" : permet d'arrêter l'exécution du script
      * - Autre : Reçoit un script ou une commande du client et les stocke en FIFO (First In First Out).
      */
     private void mainLoop() {
@@ -319,7 +319,7 @@ public class Serveur {
     /**
      * Execute le script (Série d'S-expression) enregistré
      */
-    public void executeCommand() throws IOException {
+    public void executeCommand() {
         if (compiled.size() == 0) {
             System.err.println("Compiled est vide");
 
@@ -333,9 +333,6 @@ public class Serveur {
             for (SNode sNode : Objects.requireNonNull(compiled)) {
                 new Interpreter().compute(environment, sNode);
             }
-            currentExecutedScript = outputSNodeText.getSNodeExpressionString(compiled);
-            //sendObject(new DataSC());
-
             processClientCommand();
 
             compiled.clear();
@@ -359,8 +356,7 @@ public class Serveur {
 
         sendObject(dataSC);
 
-        Graph graph;
-        graph = new Graph();
+        Graph graph = new Graph();
         Reference spaceRef = environment.getReferenceByName("space");
         GSpace gSpace = ((GSpace) spaceRef.getReceiver());
         Color cSpace = gSpace.getBackground();
@@ -369,11 +365,7 @@ public class Serveur {
         graph.setEntiers(new int[]{gSpace.getX(), gSpace.getY(), (int) dimensionSpace.getWidth(), (int) dimensionSpace.getHeight()});
         graph.setCouleurs(new int[]{cSpace.getRed(), cSpace.getGreen(), cSpace.getBlue()});
 
-        try {
-            sendGraph(graph);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        sendGraph(graph);
 
         for (Reference ref : environment.getVariables().values()) {
             graph = new Graph();
@@ -384,55 +376,51 @@ public class Serveur {
                 graph.setCmd("drawRect");
                 graph.setEntiers(new int[]{gBounded.getX(), gBounded.getY(), gBounded.getWidth(), gBounded.getHeight()});
                 graph.setCouleurs(new int[]{c.getRed(), c.getGreen(), c.getBlue()});
-            }
-            else if (ref.getReceiver() instanceof GOval) {
+            } else if (ref.getReceiver() instanceof GOval) {
                 GBounded gBounded = ((GOval) ref.getReceiver());
                 Color c = gBounded.getColor();
 
                 graph.setCmd("drawOval");
                 graph.setEntiers(new int[]{gBounded.getX(), gBounded.getY(), gBounded.getWidth(), gBounded.getHeight()});
                 graph.setCouleurs(new int[]{c.getRed(), c.getGreen(), c.getBlue()});
-            }
-            else if (ref.getReceiver() instanceof GSpace) {
+            } else if (ref.getReceiver() instanceof GSpace) {
                 continue;
             } else if (ref.getReceiver() instanceof GString) {
                 Color c = ((GString) ref.getReceiver()).getColor();
 
                 graph.setCmd("drawString");
-                graph.setChaines(new String[] {((GString)ref.getReceiver()).getString()});
+                graph.setChaines(new String[]{((GString) ref.getReceiver()).getString()});
                 graph.setEntiers(new int[]{((GString) ref.getReceiver()).getX(), ((GString) ref.getReceiver()).getY()});
                 graph.setCouleurs(new int[]{c.getRed(), c.getGreen(), c.getBlue()});
-            }
-            else if(ref.getReceiver() instanceof GImage){
+            } else if (ref.getReceiver() instanceof GImage) {
                 GImage i = (GImage) ref.getReceiver();
 
                 Point p = ((GImage) ref.getReceiver()).getPosition();
                 BufferedImage bufferedImage = new BufferedImage(i.getRawImage().getWidth(null), i.getRawImage().getHeight(null), BufferedImage.TYPE_INT_ARGB);
                 graph.setCmd("drawString");
                 String imgInString = Objects.requireNonNull(getByteImage(bufferedImage)).toString(StandardCharsets.UTF_8);
-                graph.setChaines(new String[] {imgInString});
+                graph.setChaines(new String[]{imgInString});
                 graph.setEntiers(new int[]{p.x, p.y});
             }
 
-            try {
-                sendGraph(graph);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            sendGraph(graph);
         }
     }
 
+    private void sendGraph(Graph g) {
+        try {
+            StringWriter sw = new StringWriter();
 
-    private void sendGraph(Graph g) throws IOException {
-        StringWriter sw = new StringWriter();
+            JsonGenerator generator = new JsonFactory().createGenerator(sw);
+            ObjectMapper mapper = new ObjectMapper();
+            generator.setCodec(mapper);
+            generator.writeObject(g);
+            generator.close();
 
-        JsonGenerator generator = new JsonFactory().createGenerator(sw);
-        ObjectMapper mapper = new ObjectMapper();
-        generator.setCodec(mapper);
-        generator.writeObject(g);
-        generator.close();
-
-        oos.writeObject(sw.toString());
+            oos.writeObject(sw.toString());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -444,6 +432,7 @@ public class Serveur {
         StringWriter sw = new StringWriter();
         dataSC.errMsg = errorMsg;
         dataSC.txt = currentExecutedScript;
+        System.out.println("Envoi de l'objet avec getTxt : " + dataSC.getTxt());
         dataSC.SNode = outputSNodeText.getSNodeExpressionString(compiled);
         dataSC.env = environment.getEnvString();
         dataSC.cmd = "";
@@ -459,81 +448,6 @@ public class Serveur {
         } catch (Exception e) {
             System.err.println("Erreur sendObject");
             e.printStackTrace();
-        }
-    }
-
-    private Graph getGraphsFromClient(Reference ref) {
-        Graph res = new Graph();
-        GBounded obj = (GBounded) ref.getReceiver();
-        if (ref.getReceiver() instanceof GBounded) {
-            Color c = obj.getColor();
-
-            res.setEntiers(new int[]{obj.getX(), obj.getY(), obj.getWidth(), obj.getHeight()});
-            res.setCouleurs(new int[]{c.getRed(), c.getGreen(), c.getBlue()});
-
-            if (ref.getReceiver() instanceof GRect)
-                res.setCmd("fillRect");
-
-            if (ref.getReceiver() instanceof GOval)
-                res.setCmd("fillOval");
-
-        }
-        if (ref.getReceiver() instanceof GString) {
-            Color c = obj.getColor();
-
-            res.setCmd("drawString");
-            res.setEntiers(new int[]{obj.getX(), obj.getY(), obj.getWidth(), obj.getHeight()});
-            res.setCouleurs(new int[]{c.getRed(), c.getGreen(), c.getBlue()});
-
-        }
-
-        return res;
-    }
-
-    /**
-     * Converti l'environnement en JSON et l'envoie au Client
-     */
-    public void convertToJsonAndSend() throws IOException {
-        List<Object> visited = new ArrayList<>();
-        oos.writeObject(toJson(environment, visited));
-    }
-//TODO : faut voir si ça marche
-
-    /**
-     * Converti l'objet en JSON
-     *
-     * @param obj     Objet à convertir en JSON
-     * @param visited Liste des objets déjà visités
-     * @return L'objet en JSON
-     */
-    private String toJson(Object obj, List<Object> visited) {
-        if (obj == null) {
-            return "aucun objet à convertir en JSON";
-        } else if (visited.contains(obj)) {
-            return "CIRCULAR";
-        } else if (obj instanceof Environment) {
-            Environment env = (Environment) obj;
-            List<String> entries = new ArrayList<>();
-            for (String key : env.variables.keySet()) {
-                Reference ref = env.variables.get(key);
-                String value = toJson(ref, visited);
-                entries.add(String.format("\"%s\": %s", key, value));
-            }
-            return "{" + String.join(",", entries) + "}";
-        } else if (obj instanceof Reference) {
-            visited.add(obj);
-            Reference ref = (Reference) obj;
-            List<String> entries = new ArrayList<>();
-            for (String key : ref.primitives.keySet()) {
-                Command cmd = ref.primitives.get(key);
-                String value = toJson(cmd, visited);
-                entries.add(String.format("\"%s\": %s", key, value));
-            }
-            return "{" + String.join(",", entries) + "}";
-        } else if (obj instanceof String) {
-            return "\"" + ((String) obj).replace("\"", "\\\"") + "\"";
-        } else {
-            return obj.toString();
         }
     }
 

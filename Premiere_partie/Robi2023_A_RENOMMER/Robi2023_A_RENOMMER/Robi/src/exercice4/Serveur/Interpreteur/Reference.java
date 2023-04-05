@@ -1,4 +1,4 @@
-package exercice4;
+package exercice4.Serveur.Interpreteur;
 
 
 import stree.parser.SNode;
@@ -9,7 +9,7 @@ import java.util.Map;
 public class Reference {
 
 	Object receiver;
-	Map<String, Command> primitives;
+	public Map<String, Command> primitives;
 
 	public Reference(Object receiver) {
 		this.receiver = receiver;

@@ -13,6 +13,7 @@ import java.io.ObjectOutputStream;
 import java.io.StringWriter;
 import java.net.ConnectException;
 import java.net.Socket;
+import java.util.Objects;
 
 public class ClientSocketOperations {
     /**
@@ -126,7 +127,7 @@ public class ClientSocketOperations {
     public static void sendScript(ClientRobiSwing ihm, ObjectInputStream in, ObjectOutputStream out) {
         DataCS dataCS = new DataCS();
         dataCS.setCmd("");
-        String txt = ihm.getInputText();
+        String txt = ihm.txt_in.getText();
 
         if (txt.length() == 0) {
             ihm.writeLog("Erreur, le script est vide");
@@ -135,7 +136,12 @@ public class ClientSocketOperations {
 
         dataCS.setTxt(txt);
         sendDataServer(dataCS, out);
-        receiveDataServer(in, ihm);
+        DataSC dataSC = receiveDataServer(in, ihm);
+
+        if (!Objects.requireNonNull(dataSC).getErrMsg().equals("")) {
+            ihm.writeLog(dataSC.getErrMsg());
+            return;
+        }
         ihm.writeLog("Script envoyé au serveur");
     }
 

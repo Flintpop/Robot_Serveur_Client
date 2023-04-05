@@ -14,7 +14,6 @@ import static exercice4.Client.ClientSocketOperations.*;
 public class Client {
     public ClientRobiSwing ihm;
     private Socket socket;
-
     private ObjectOutputStream out;
     private ObjectInputStream in;
     public enum mode {
@@ -73,8 +72,10 @@ public class Client {
 
         ihm.button_stop.addActionListener(e -> {
             sendStopFlag(ihm, in, out);
-            ihm.writeLog("Arrêt du script");
+            resetClientEnvironment();
+            ihm.writeLog("Environnement et script du serveur supprimés. Affichage réinitialisé.");
         });
+
         ihm.button_clear.addActionListener(e -> ihm.txt_out.setText(""));
 
         ihm.button_mode_exec.addActionListener(e -> {
@@ -85,18 +86,12 @@ public class Client {
 
         ihm.button_exec.addActionListener(e -> {
             sendExecuteFlag(out);
-
-            ihm.gra = receiveGraphsFromServer(in);
-            DataSC data = receiveDataServer(in, ihm);
-            if (data == null) {
-                ihm.writeLog("Erreur de communication avec le serveur");
-                return;
-            }
-
-            if (getExecutionMode() == Client.mode.STEP_BY_STEP) {
-                ihm.writeLog("Ligne : " + data.getTxt() + " exécutée");
-            }
+            receiveGraphUpdatedFromServer();
         });
+    }
+
+    private void resetClientEnvironment() {
+        ihm.clear();
     }
 
     mode executionMode = mode.BLOCK;
@@ -181,7 +176,38 @@ public class Client {
         this.socket = socket;
     }
 
+    private void receiveGraphUpdatedFromServer() {
+        ihm.clear();
 
+        // Recoit le nombre de loop qu'il doit faire
+        DataSC dataSC = receiveDataServer(in, ihm);
+
+        if (dataSC == null) {
+            System.err.println("Erreur, pas de dataSC d'envoyé dans l'action listener du bouton exec");
+            return;
+        }
+
+        for (int i = 0; i < dataSC.getnLoops(); i++) {
+            ihm.gra = receiveGraphsFromServer(in);
+
+            if (ihm.gra == null) {
+                System.err.println("Erreur, le graph envoyé par le serveur est null dans l'action listener du bouton exec");
+                return;
+            }
+
+            ihm.gra.draw(ihm.graph);
+        }
+
+        // C'est pour avoir la ligne exécutée quand on est en mode step by step. Quand on est en mode bloc l'objet est envoyé quand même.
+
+        // Je ne sais plus ou ce receive est et pourquoi il est là mais si je l'enlève ça marche pas
+        // Flemme de retrouver le sendObject qui va avec
+        DataSC data2 = receiveDataServer(in, ihm);
+
+        if (getExecutionMode() == Client.mode.STEP_BY_STEP) {
+            ihm.writeLog("Ligne : " + dataSC.getTxt() + " exécutée");
+        }
+    }
 
     public static void main(String[] args) {
 

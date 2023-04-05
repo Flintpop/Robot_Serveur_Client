@@ -1,6 +1,5 @@
 package exercice4.Serveur.Interpreteur;
 
-
 import stree.parser.SNode;
 
 public interface Command {
