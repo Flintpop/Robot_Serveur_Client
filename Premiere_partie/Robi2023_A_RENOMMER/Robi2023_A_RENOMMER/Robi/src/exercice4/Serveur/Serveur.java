@@ -217,7 +217,7 @@ public class Serveur {
         if (msg[1].toLowerCase().contains("screen")) {
             sendServerMode = sendMode.SCREEN;
             System.out.println("Nouveau mode d'exécution : " + getSendServerMode());
-//            space.open();
+            space.open();
             // TODO: tout repeindre ? Ou laisser la partie graphique telle quelle (Donc ne pas supprimer) ?
             return;
         }
@@ -478,9 +478,11 @@ public class Serveur {
         dataSC.txt = currentExecutedScript;
         dataSC.SNode = outputSNodeText.getSNodeExpressionString(compiled);
 
-        if (sendServerMode.equals(sendMode.COMMANDS)) {
-            ByteArrayOutputStream baos = getByteScreenshot();
-            dataSC.im = Base64.getEncoder().encodeToString(Objects.requireNonNull(baos).toByteArray());
+        if (sendServerMode != null) {
+            if (sendServerMode.equals(sendMode.COMMANDS)) {
+                ByteArrayOutputStream baos = getByteScreenshot();
+                dataSC.im = Base64.getEncoder().encodeToString(Objects.requireNonNull(baos).toByteArray());
+            }
         }
 
         dataSC.env = environment.getEnvString();

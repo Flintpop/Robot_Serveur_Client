@@ -33,6 +33,10 @@ public class Client {
         ihm.writeLog("Connection réussie");
 
         ihm.enableButtons();
+        DataCS initSwitchSendMode = new DataCS();
+        initSwitchSendMode.setCmd("switchSendMode " + ihm.getSendMode());
+        initSwitchSendMode.setTxt("");
+        sendDataServer(initSwitchSendMode, out);
 
         // Init mode d'exécution au serveur
         DataCS initSwitchMode = new DataCS();
@@ -43,6 +47,7 @@ public class Client {
 
         ihm.writeLog("Réception de l'environnement et du SNode");
         receiveDataServer(in, ihm);
+
     }
 
     private void setButtonsNames() {
