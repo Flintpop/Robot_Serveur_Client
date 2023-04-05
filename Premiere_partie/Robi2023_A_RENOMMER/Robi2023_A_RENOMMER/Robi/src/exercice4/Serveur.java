@@ -14,7 +14,6 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
 
@@ -87,7 +86,7 @@ public class Serveur {
             oos = new ObjectOutputStream(socket.getOutputStream());
             ois = new ObjectInputStream(socket.getInputStream());
 
-            sendObject(new DataSC());
+            sendEnvAndScript();
 
             while (true) {
                 currentMsg = receiveClientMsg();
@@ -221,7 +220,7 @@ public class Serveur {
         environment.addReference("Image", imageClassRef);
         environment.addReference("Label", stringClassRef);
 
-        sendObject(new DataSC());
+        sendEnvAndScript();
     }
 
     /**
@@ -256,7 +255,7 @@ public class Serveur {
      *
      * @param currentMsg Le message du client sous forme de string continue
      */
-    private void receiveScript(String currentMsg) throws IOException {
+    private void receiveScript(String currentMsg) {
         SParser<SNode> parser;
         parser = new SParser<>();
 
@@ -272,7 +271,7 @@ public class Serveur {
             chiant.printStackTrace();
         }
 
-        //sendObject(new DataSC());
+        sendScript();
     }
 
     /**
@@ -311,7 +310,7 @@ public class Serveur {
     public void executeCommand() throws IOException {
         if (compiled.size() == 0) {
             System.err.println("Compiled est vide");
-            sendObject(new DataSC());
+            sendImageEnvAndScript();
             return;
         }
 
@@ -328,21 +327,19 @@ public class Serveur {
 
             g.setCmd("fillRect");
             g.setEntiers(new int[]{robi.getX(), robi.getY(), robi.getWidth(), robi.getHeight()});
-            g.setCouleurs(new int[] {c.getRed(), c.getGreen(), c.getBlue()});
+            g.setCouleurs(new int[]{c.getRed(), c.getGreen(), c.getBlue()});
             sendGraph(g);
+
+            compiled.clear();
+            sendImageEnvAndScript();
+            return;
         }
 
         // Execution step by step
         new Interpreter().compute(environment, Objects.requireNonNull(compiled).get(0));
         currentExecutedScript = outputSNodeText.getSNodeExpressionString(compiled.subList(0, 1));
         compiled.remove(0);
-        //sendObject(new DataSC());
-        try {
-            convertToJsonAndSend();
-        } catch (IOException e) {
-            System.err.println("Erreur à la conversion en JSON de l'environnement");
-            throw new RuntimeException(e);
-        }
+        sendImageEnvAndScript();
     }
 
 
@@ -365,11 +362,9 @@ public class Serveur {
      */
     public void sendObject(DataSC dataSC) {
         StringWriter sw = new StringWriter();
-        ByteArrayOutputStream baos = getByteScreenshot();
         dataSC.txt = currentExecutedScript;
         dataSC.SNode = outputSNodeText.getSNodeExpressionString(compiled);
         dataSC.env = environment.getEnvString();
-        dataSC.im = Base64.getEncoder().encodeToString(Objects.requireNonNull(baos).toByteArray());
         dataSC.cmd = "";
         try {
             JsonGenerator generator = new JsonFactory().createGenerator(sw);
@@ -377,7 +372,6 @@ public class Serveur {
             generator.setCodec(mapper);
             generator.writeObject(dataSC);
             generator.close();
-
 
             oos.writeObject(sw.toString());
             currentExecutedScript = "";
@@ -403,12 +397,12 @@ public class Serveur {
                 res.setCmd("fillOval");
 
         }
-        if(ref.getReceiver() instanceof GString) {
+        if (ref.getReceiver() instanceof GString) {
             Color c = obj.getColor();
 
             res.setCmd("drawString");
-            res.setEntiers(new int[] {obj.getX(), obj.getY(), obj.getWidth(), obj.getHeight()});
-            res.setCouleurs(new int[] {c.getRed(), c.getGreen(), c.getBlue()} );
+            res.setEntiers(new int[]{obj.getX(), obj.getY(), obj.getWidth(), obj.getHeight()});
+            res.setCouleurs(new int[]{c.getRed(), c.getGreen(), c.getBlue()});
 
         }
 
@@ -423,11 +417,12 @@ public class Serveur {
         oos.writeObject(toJson(environment, visited));
     }
 //TODO : faut voir si ça marche
+
     /**
      * Converti l'objet en JSON
      *
-     * @param obj      Objet à convertir en JSON
-     * @param visited  Liste des objets déjà visités
+     * @param obj     Objet à convertir en JSON
+     * @param visited Liste des objets déjà visités
      * @return L'objet en JSON
      */
     private String toJson(Object obj, List<Object> visited) {
@@ -461,6 +456,17 @@ public class Serveur {
         }
     }
 
+    private void sendScript() {
+        sendObject(new DataSC());
+    }
+
+    private void sendEnvAndScript() {
+        sendObject(new DataSC());
+    }
+
+    private void sendImageEnvAndScript() {
+        sendObject(new DataSC());
+    }
 
     public static void main(String[] args) {
         new Serveur();

@@ -1,6 +1,5 @@
 package exercice4;
 
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,9 +15,7 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Base64;
-import java.util.Objects;
 
 /**
  * Client RobiSwing. IHM pour le client. Permet de saisir des expressions ROBI et de les envoyer au serveur.
@@ -241,7 +238,6 @@ public class ClientRobiSwing {
         if (client.getExecutionModeString().equals("Block")) {
             writeLog("Exécution du script");
         }
-        gra = receiveGraphsFromServer();
     }
 
     /**
@@ -259,7 +255,7 @@ public class ClientRobiSwing {
 
         dataCS.txt = txt;
         sendDataServer(dataCS);
-        //receiveDataServer();
+        receiveDataServer();
         writeLog("Script envoyé au serveur");
     }
 
@@ -465,13 +461,12 @@ public class ClientRobiSwing {
         button_exec.addActionListener(e -> {
             sendExecuteFlag();
 
+            gra = receiveGraphsFromServer();
             DataSC data = receiveDataServer();
             if (data == null) {
                 writeLog("Erreur de communication avec le serveur");
                 return;
             }
-
-            displayScreenshot(lireImage(data.getIm()));
 
             if (client.getExecutionMode() == Client.mode.STEP_BY_STEP) {
                 writeLog("Ligne : " + data.getTxt() + " exécutée");
@@ -513,17 +508,7 @@ public class ClientRobiSwing {
         txt_in = new JTextPane();
         txt_in.setEditable(true);
         txt_in.setFont(courierFont);
-        txt_in.setText("(space add robi (Rect new))\n" +
-                "(robi translate 130 50)\n" +
-                "(robi setColor yellow)\n" +
-                "(space add momo (Oval new))\n" +
-                "(momo setColor red)\n" +
-                "(momo translate 80 80)\n" +
-                "(space add pif (Image new alien.gif))\n" +
-                "(pif translate 100 0)\n" +
-                "(space add hello (Label new \"Hello world\"))\n" +
-                "(hello translate 10 10)\n" +
-                "(hello setColor black)\n");
+        txt_in.setText("(space add robi (Rect new))\n");
         s_txt_in = new JScrollPane();
         s_txt_in.setPreferredSize(new Dimension(640, 480));
         s_txt_in.getViewport().add(txt_in);
