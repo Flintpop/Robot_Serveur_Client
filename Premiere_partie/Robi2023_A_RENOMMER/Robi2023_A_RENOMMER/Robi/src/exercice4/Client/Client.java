@@ -52,6 +52,7 @@ public class Client {
         ihm.button_clear.setLabel("Effacer la console");
         ihm.button_mode_exec.setLabel(getExecutionModeString());
         ihm.button_exec.setLabel("Exécuter");
+        ihm.button_switch_send_modes.setLabel("Envoyer en mode " + ihm.getSendMode());
     }
 
     private void setActionListeners() {
@@ -88,6 +89,15 @@ public class Client {
             sendExecuteFlag(out);
             receiveGraphUpdatedFromServer();
         });
+
+       ihm.button_switch_send_modes.addActionListener( e-> switchSendMode());
+    }
+
+    private void switchSendMode() {
+        ihm.switchSendMode();
+        ihm.button_switch_send_modes.setLabel("Envoyer en mode " + ihm.getSendMode());
+        sendSwitchSendModeFlag(out, ihm.getSendMode());
+        ihm.writeLog("Mode d'envoi de script changé : " + ihm.getSendMode());
     }
 
     private void resetClientEnvironment() {
@@ -126,6 +136,7 @@ public class Client {
         setExecutionMode(mode.STEP_BY_STEP);
     }
 
+    @SuppressWarnings("unused")
     public ObjectInputStream getIn() {
         return in;
     }
@@ -179,7 +190,7 @@ public class Client {
     private void receiveGraphUpdatedFromServer() {
         ihm.clear();
 
-        // Recoit le nombre de loop qu'il doit faire
+        // Reçoit le nombre de loop qu'il doit faire
         DataSC dataSC = receiveDataServer(in, ihm);
 
         if (dataSC == null) {
@@ -200,9 +211,9 @@ public class Client {
 
         // C'est pour avoir la ligne exécutée quand on est en mode step by step. Quand on est en mode bloc l'objet est envoyé quand même.
 
-        // Je ne sais plus ou ce receive est et pourquoi il est là mais si je l'enlève ça marche pas
+        // Je ne sais plus où ce receive est et pourquoi il est là, mais si je l'enlève ça ne marche pas
         // Flemme de retrouver le sendObject qui va avec
-        DataSC data2 = receiveDataServer(in, ihm);
+        @SuppressWarnings("unused") DataSC data2 = receiveDataServer(in, ihm);
 
         if (getExecutionMode() == Client.mode.STEP_BY_STEP) {
             ihm.writeLog("Ligne : " + dataSC.getTxt() + " exécutée");

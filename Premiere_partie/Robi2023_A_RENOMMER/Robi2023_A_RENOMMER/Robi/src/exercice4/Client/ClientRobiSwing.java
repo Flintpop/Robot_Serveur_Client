@@ -48,6 +48,13 @@ public class ClientRobiSwing {
 
     private String currentDir = ".";
     protected Button button_clear = null;
+    protected Button button_switch_send_modes = null;
+
+    protected enum sendMode {
+        SCREEN,
+        COMMANDS
+    }
+    protected sendMode serverSendMode = sendMode.COMMANDS;
 
     /**
      * Initialisation de l'IHM. Création des composants. Affichage de la fenêtre. Connexion au serveur.
@@ -92,6 +99,7 @@ public class ClientRobiSwing {
         button_stop = new Button();
         button_clear = new Button();
         button_mode_exec = new Button();
+        button_switch_send_modes = new Button();
         button_exec = new Button();
 
         disableButtons();
@@ -101,6 +109,7 @@ public class ClientRobiSwing {
         panel_button.add(button_clear);
         panel_button.add(button_stop);
         panel_button.add(button_mode_exec);
+        panel_button.add(button_switch_send_modes);
         panel_button.add(button_exec);
 
         // zones d'affichage ou de saisie
@@ -176,6 +185,7 @@ public class ClientRobiSwing {
         button_stop.setEnabled(true);
         button_exec.setEnabled(true);
         button_clear.setEnabled(true);
+        button_switch_send_modes.setEnabled(true);
     }
 
     private void disableButtons() {
@@ -185,6 +195,7 @@ public class ClientRobiSwing {
         button_mode_exec.setEnabled(false);
         button_exec.setEnabled(false);
         button_clear.setEnabled(false);
+        button_switch_send_modes.setEnabled(false);
     }
 
     /**
@@ -254,7 +265,28 @@ public class ClientRobiSwing {
         g2.draw(graph);
     }
 
+    @SuppressWarnings("unused")
     public String getInputText() {
         return txt_in.getText();
+    }
+
+    public String getSendMode() {
+        if (serverSendMode.equals(sendMode.COMMANDS)) {
+            return "sendCommands";
+        } else {
+            return "sendScreenshot";
+        }
+    }
+
+    public void setSendMode(sendMode mode) {
+        serverSendMode = mode;
+    }
+
+    public void switchSendMode() {
+        if (serverSendMode.equals(sendMode.COMMANDS)) {
+            setSendMode(sendMode.SCREEN);
+        } else {
+            setSendMode(sendMode.COMMANDS);
+        }
     }
 }

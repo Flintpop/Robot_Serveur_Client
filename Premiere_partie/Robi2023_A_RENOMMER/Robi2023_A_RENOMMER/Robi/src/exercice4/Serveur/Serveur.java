@@ -3,7 +3,6 @@ package exercice4.Serveur;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import exercice4.Client.Client;
 import exercice4.Serveur.Interpreteur.*;
 import graphicLayer.*;
 import stree.parser.SNode;
@@ -18,6 +17,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
 
@@ -30,11 +30,22 @@ public class Serveur {
     Socket socket;
     ObjectOutputStream oos;
     ObjectInputStream ois;
-
     Environment environment = new Environment();
     List<SNode> compiled;
     String currentExecutedScript;
-    Client.mode executionMode;
+
+    public enum mode {
+        STEP_BY_STEP,
+        BLOCK
+
+    }
+
+    private enum sendMode {
+        SCREEN,
+        COMMANDS
+    }
+    mode executionMode;
+    sendMode sendServerMode;
     GSpace space;
     Dimension dimensionSpace = new Dimension(200, 100);
 
@@ -95,6 +106,7 @@ public class Serveur {
 
             sendEnvAndScript();
 
+            //noinspection InfiniteLoopStatement
             while (true) {
                 currentMsg = receiveClientMsg();
                 System.out.println("Received " + currentMsg);
@@ -189,14 +201,40 @@ public class Serveur {
         }
 
         if (msg[0].contains("stop")) {
-            stopExecution();
+            resetEnvironmentAndGraphics();
+            return;
+        }
+
+        if (msg[0].contains("switchSendMode")) {
+            switchSendMode(msg);
             return;
         }
 
         receiveScript(currentMsg);
     }
 
-    private void stopExecution() {
+    private void switchSendMode(String[] msg) {
+        if (msg[1].toLowerCase().contains("screen")) {
+            sendServerMode = sendMode.SCREEN;
+            System.out.println("Nouveau mode d'exécution : " + getSendServerMode());
+//            space.open();
+            // TODO: tout repeindre ? Ou laisser la partie graphique telle quelle (Donc ne pas supprimer) ?
+            return;
+        }
+
+        sendServerMode = sendMode.COMMANDS;
+        System.out.println("Nouveau mode d'exécution : " + getSendServerMode());
+    }
+
+    private String getSendServerMode() {
+        if (sendServerMode.equals(sendMode.COMMANDS)) {
+            return "sendCommands";
+        } else {
+            return "sendScreenshot";
+        }
+    }
+
+    private void resetEnvironmentAndGraphics() {
         compiled.clear();
         currentExecutedScript = "";
         System.out.println("Reset du serveur");
@@ -238,12 +276,12 @@ public class Serveur {
     private void switchMode(String[] currentMsg) {
         // currentMsg[1] est le mode choisi
         if (currentMsg[1].toLowerCase().contains("block")) {
-            executionMode = Client.mode.BLOCK;
+            executionMode = mode.BLOCK;
             System.out.println("Nouveau mode d'exécution : " + getExecutionMode());
             return;
         }
 
-        executionMode = Client.mode.STEP_BY_STEP;
+        executionMode = mode.STEP_BY_STEP;
         System.out.println("Nouveau mode d'exécution : " + getExecutionMode());
     }
 
@@ -253,7 +291,7 @@ public class Serveur {
      * @return Le mode d'exécution actuel
      */
     private String getExecutionMode() {
-        if (executionMode == Client.mode.STEP_BY_STEP) return "Step by step";
+        if (executionMode == mode.STEP_BY_STEP) return "Step by step";
         return "Block";
     }
 
@@ -323,17 +361,21 @@ public class Serveur {
         if (compiled.size() == 0) {
             System.err.println("Compiled est vide");
 
-            processClientCommand();
+            if (sendServerMode.equals(sendMode.COMMANDS)) {
+                processClientCommand();
+            }
 
             sendImageEnvAndScript();
             return;
         }
 
-        if (executionMode.equals(Client.mode.BLOCK)) {
+        if (executionMode.equals(mode.BLOCK)) {
             for (SNode sNode : Objects.requireNonNull(compiled)) {
                 new Interpreter().compute(environment, sNode);
             }
-            processClientCommand();
+            if (sendServerMode.equals(sendMode.COMMANDS)) {
+                processClientCommand();
+            }
 
             compiled.clear();
 
@@ -344,7 +386,9 @@ public class Serveur {
         // Execution step by step
         new Interpreter().compute(environment, Objects.requireNonNull(compiled).get(0));
         currentExecutedScript = outputSNodeText.getSNodeExpressionString(compiled.subList(0, 1));
-        processClientCommand();
+        if (sendServerMode.equals(sendMode.COMMANDS)) {
+            processClientCommand();
+        }
         compiled.remove(0);
         sendImageEnvAndScript();
     }
@@ -432,10 +476,16 @@ public class Serveur {
         StringWriter sw = new StringWriter();
         dataSC.errMsg = errorMsg;
         dataSC.txt = currentExecutedScript;
-        System.out.println("Envoi de l'objet avec getTxt : " + dataSC.getTxt());
         dataSC.SNode = outputSNodeText.getSNodeExpressionString(compiled);
+
+        if (sendServerMode.equals(sendMode.COMMANDS)) {
+            ByteArrayOutputStream baos = getByteScreenshot();
+            dataSC.im = Base64.getEncoder().encodeToString(Objects.requireNonNull(baos).toByteArray());
+        }
+
         dataSC.env = environment.getEnvString();
         dataSC.cmd = "";
+
         try {
             JsonGenerator generator = new JsonFactory().createGenerator(sw);
             ObjectMapper mapper = new ObjectMapper();
@@ -449,6 +499,28 @@ public class Serveur {
             System.err.println("Erreur sendObject");
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Prend une capture d'écran de la fenêtre graphique et la convertit en byteArrayOutputStream
+     *
+     * @return : le byteArrayOutputStream de l'image capturée
+     */
+    private ByteArrayOutputStream getByteScreenshot() {
+        try {
+            BufferedImage image = screenshot(space);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ImageIO.write(image, "jpg", baos);
+            return baos;
+        } catch (IOException e) {
+            System.err.println("Erreur à la conversion en base64");
+            e.printStackTrace();
+        } catch (Exception e) {
+            System.err.println("Erreur inconnue dans getByteScreenshot");
+            System.err.println(e.getMessage());
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public void sendObject(DataSC dataSC) {

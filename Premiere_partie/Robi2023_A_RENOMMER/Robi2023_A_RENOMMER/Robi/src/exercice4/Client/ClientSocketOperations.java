@@ -172,13 +172,19 @@ public class ClientSocketOperations {
         sendDataServer(dataCS, out);
 
         DataSC data = receiveDataServer(in, ihm);
+
         if (data == null) {
             ihm.writeLog("Erreur de communication avec le serveur");
             return;
         }
 
         ihm.writeLog("Suppression des données d'environnement et de script du serveur");
-        // TODO: Recevoir l'image du graphe et l'afficher (cela devrait être rien)
-        //  Ou afficher rien.
+    }
+
+    public static void sendSwitchSendModeFlag(ObjectOutputStream out, String newSendMode) {
+        DataCS dataCS = new DataCS();
+        dataCS.setCmd("switchSendMode " + newSendMode);
+        dataCS.setTxt("");
+        sendDataServer(dataCS, out);
     }
 }
