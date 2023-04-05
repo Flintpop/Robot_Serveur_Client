@@ -79,7 +79,6 @@ public class Serveur {
      */
     private void mainLoop() {
         String currentMsg;
-
         System.out.println("Serveur Robi");
         try {
             serverSocket = new ServerSocket(2000);
@@ -170,7 +169,7 @@ public class Serveur {
      *
      * @param currentMsg : le message du client
      */
-    private void processClientMsg(String currentMsg) {
+    private void processClientMsg(String currentMsg) throws IOException {
 
         String[] msg = currentMsg.split(" ");
         if (msg[0].contains("switchMode")) {
@@ -257,7 +256,7 @@ public class Serveur {
      *
      * @param currentMsg Le message du client sous forme de string continue
      */
-    private void receiveScript(String currentMsg) {
+    private void receiveScript(String currentMsg) throws IOException {
         SParser<SNode> parser;
         parser = new SParser<>();
 
@@ -273,7 +272,7 @@ public class Serveur {
             chiant.printStackTrace();
         }
 
-        sendObject(new DataSC());
+        //sendObject(new DataSC());
     }
 
     /**
@@ -309,7 +308,7 @@ public class Serveur {
     /**
      * Execute le script (Série d'S-expression) enregistré
      */
-    public void executeCommand() {
+    public void executeCommand() throws IOException {
         if (compiled.size() == 0) {
             System.err.println("Compiled est vide");
             sendObject(new DataSC());
@@ -321,20 +320,46 @@ public class Serveur {
                 new Interpreter().compute(environment, sNode);
             }
             currentExecutedScript = outputSNodeText.getSNodeExpressionString(compiled);
-            compiled.clear();
-            sendObject(new DataSC());
-            return;
+            //sendObject(new DataSC());
+            Graph g = new Graph();
+
+            GRect robi = (GRect) environment.getReferenceByName("robi").getReceiver();
+            Color c = robi.getColor();
+
+            g.setCmd("fillRect");
+            g.setEntiers(new int[]{robi.getX(), robi.getY(), robi.getWidth(), robi.getHeight()});
+            g.setCouleurs(new int[] {c.getRed(), c.getGreen(), c.getBlue()});
+            sendGraph(g);
         }
 
         // Execution step by step
         new Interpreter().compute(environment, Objects.requireNonNull(compiled).get(0));
         currentExecutedScript = outputSNodeText.getSNodeExpressionString(compiled.subList(0, 1));
         compiled.remove(0);
-        sendObject(new DataSC());
+        //sendObject(new DataSC());
+        try {
+            convertToJsonAndSend();
+        } catch (IOException e) {
+            System.err.println("Erreur à la conversion en JSON de l'environnement");
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    private void sendGraph(Graph g) throws IOException {
+        StringWriter sw = new StringWriter();
+
+        JsonGenerator generator = new JsonFactory().createGenerator(sw);
+        ObjectMapper mapper = new ObjectMapper();
+        generator.setCodec(mapper);
+        generator.writeObject(g);
+        generator.close();
+
+        oos.writeObject(sw.toString());
     }
 
     /**
-     * converti l'objet en JSON et l'envoie au Client
+     * Converti l'objet en JSON et l'envoie au Client
      *
      * @param dataSC objet à envoyer au Client
      */
@@ -353,6 +378,7 @@ public class Serveur {
             generator.writeObject(dataSC);
             generator.close();
 
+
             oos.writeObject(sw.toString());
             currentExecutedScript = "";
         } catch (Exception e) {
@@ -360,6 +386,81 @@ public class Serveur {
             e.printStackTrace();
         }
     }
+
+    private Graph getGraphsFromClient(Reference ref) {
+        Graph res = new Graph();
+        GBounded obj = (GBounded) ref.getReceiver();
+        if (ref.getReceiver() instanceof GBounded) {
+            Color c = obj.getColor();
+
+            res.setEntiers(new int[]{obj.getX(), obj.getY(), obj.getWidth(), obj.getHeight()});
+            res.setCouleurs(new int[]{c.getRed(), c.getGreen(), c.getBlue()});
+
+            if (ref.getReceiver() instanceof GRect)
+                res.setCmd("fillRect");
+
+            if (ref.getReceiver() instanceof GOval)
+                res.setCmd("fillOval");
+
+        }
+        if(ref.getReceiver() instanceof GString) {
+            Color c = obj.getColor();
+
+            res.setCmd("drawString");
+            res.setEntiers(new int[] {obj.getX(), obj.getY(), obj.getWidth(), obj.getHeight()});
+            res.setCouleurs(new int[] {c.getRed(), c.getGreen(), c.getBlue()} );
+
+        }
+
+        return res;
+    }
+
+    /**
+     * Converti l'environnement en JSON et l'envoie au Client
+     */
+    public void convertToJsonAndSend() throws IOException {
+        List<Object> visited = new ArrayList<>();
+        oos.writeObject(toJson(environment, visited));
+    }
+//TODO : faut voir si ça marche
+    /**
+     * Converti l'objet en JSON
+     *
+     * @param obj      Objet à convertir en JSON
+     * @param visited  Liste des objets déjà visités
+     * @return L'objet en JSON
+     */
+    private String toJson(Object obj, List<Object> visited) {
+        if (obj == null) {
+            return "aucun objet à convertir en JSON";
+        } else if (visited.contains(obj)) {
+            return "CIRCULAR";
+        } else if (obj instanceof Environment) {
+            Environment env = (Environment) obj;
+            List<String> entries = new ArrayList<>();
+            for (String key : env.variables.keySet()) {
+                Reference ref = env.variables.get(key);
+                String value = toJson(ref, visited);
+                entries.add(String.format("\"%s\": %s", key, value));
+            }
+            return "{" + String.join(",", entries) + "}";
+        } else if (obj instanceof Reference) {
+            visited.add(obj);
+            Reference ref = (Reference) obj;
+            List<String> entries = new ArrayList<>();
+            for (String key : ref.primitives.keySet()) {
+                Command cmd = ref.primitives.get(key);
+                String value = toJson(cmd, visited);
+                entries.add(String.format("\"%s\": %s", key, value));
+            }
+            return "{" + String.join(",", entries) + "}";
+        } else if (obj instanceof String) {
+            return "\"" + ((String) obj).replace("\"", "\\\"") + "\"";
+        } else {
+            return obj.toString();
+        }
+    }
+
 
     public static void main(String[] args) {
         new Serveur();

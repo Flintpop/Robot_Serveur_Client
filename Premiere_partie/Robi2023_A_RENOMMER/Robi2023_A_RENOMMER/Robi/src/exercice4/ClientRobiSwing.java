@@ -1,5 +1,6 @@
 package exercice4;
 
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,7 +16,9 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Objects;
 
 /**
  * Client RobiSwing. IHM pour le client. Permet de saisir des expressions ROBI et de les envoyer au serveur.
@@ -28,6 +31,7 @@ public class ClientRobiSwing {
     private BufferedImage image;
     private ObjectOutputStream out;
     private ObjectInputStream in;
+    private Graph gra;
 
     private final JFrame frame;
 
@@ -160,7 +164,33 @@ public class ClientRobiSwing {
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 if (image != null) {
-                    g.drawImage(image, 0, 0, this);
+
+                    //gra.draw(g);
+
+                    //g.drawImage(image, 0, 0, this);
+                    /*
+                    Graph gr = new Graph();
+                    gr.setCmd("drawImage");
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    try {
+                        ImageIO.write(image, "jpg", baos);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                    String[] im = {Base64.getEncoder().encodeToString(Objects.requireNonNull(baos).toByteArray())};
+                    int[] entiers = {0, 0, 200, 200};
+                    gr.setEntiers(entiers);
+                    gr.setChaines(im);
+                    gr.draw(g);*/
+
+                    /*gr.setCmd("fillRect");
+                    gr.setCouleurs(new int[]{255, 0, 0});
+                    gr.setEntiers(new int[]{0, 0, 200, 200});
+                    gr.setChaines(new String[]{});
+                    gr.draw(g);*/
+                    /*for(Graph graph1:lg){
+                        graph1.draw(g);
+                    }*/
                 }
             }
         };
@@ -183,7 +213,13 @@ public class ClientRobiSwing {
         return (panel);
     }
 
-
+    /**
+     * Récupère le contenu d'un fichier.
+     *
+     * @param f le path du fichier à lire
+     * @return le contenu du fichier
+     * @throws IOException
+     */
     private String getFileContent(String f) throws IOException {
         String res;
 
@@ -205,6 +241,7 @@ public class ClientRobiSwing {
         if (client.getExecutionModeString().equals("Block")) {
             writeLog("Exécution du script");
         }
+        gra = receiveGraphsFromServer();
     }
 
     /**
@@ -222,7 +259,7 @@ public class ClientRobiSwing {
 
         dataCS.txt = txt;
         sendDataServer(dataCS);
-        receiveDataServer();
+        //receiveDataServer();
         writeLog("Script envoyé au serveur");
     }
 
@@ -246,32 +283,51 @@ public class ClientRobiSwing {
     }
 
     /**
-     * Reçoit les données du serveur. Les données sont reçues sous forme de chaîne de caractères.
-     * En l'occurrence le serveur envoie forcément une image encodée en base64.
+     * Reçoit les données du serveur. Les données sont reçues sous le format JSON.
      *
-     * @return l'image reçue du serveur
+     * @return la class DataSC reçu du serveur
      */
     private DataSC receiveDataServer() {
         try {
             DataSC jsonData;
             String json = (String) in.readObject();
 
-            if (json == null) {
-                System.out.println("Hélas! Le messager est arrivé les mains vides...");
+            if (json == null || json.equals("")) {
+                System.err.println("Le serveur n'a rien renvoyé.");
                 return null;
             }
-
+            System.out.println("le serveur a renvoyé cote receive: " + json);
             jsonData = new ObjectMapper().readValue(json, DataSC.class);
-            System.out.println("Behold! Le JSON divin est arrivé : " + jsonData.toString());
 
             displayEnv(jsonData.env);
             displaySNode(jsonData.SNode);
 
             return jsonData;
         } catch (IOException | ClassNotFoundException e) {
+            System.err.println("Erreur à la lecture des données du serveur");
             throw new RuntimeException(e);
         }
 
+    }
+
+    private Graph receiveGraphsFromServer() {
+        try {
+            Graph graphData;
+            String json = (String) in.readObject();
+
+            if (json == null || json.equals("")) {
+                System.err.println("Le serveur n'a rien renvoyé.");
+                return null;
+            }
+
+            System.out.println("le serveur a renvoyé cote graph: " + json);
+            graphData = new ObjectMapper().readValue(json, Graph.class);
+
+            return graphData;
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("Erreur à la lecture des données du serveur");
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -290,6 +346,7 @@ public class ClientRobiSwing {
         try {
             return ImageIO.read(bais);
         } catch (IOException e) {
+            System.err.println("Erreur à la lecture de l'image");
             throw new RuntimeException(e);
         }
     }
@@ -312,7 +369,7 @@ public class ClientRobiSwing {
 
             out.writeObject(sw.toString());
         } catch (Exception e) {
-            System.err.println("Erreur sendObject");
+            System.err.println("Erreur à l'envoi des données au serveur");
             e.printStackTrace();
         }
     }
@@ -326,9 +383,9 @@ public class ClientRobiSwing {
             in = new ObjectInputStream(socket.getInputStream());
             out = new ObjectOutputStream(socket.getOutputStream());
         } catch (IOException e) {
+            System.err.println("Erreur à la connexion au serveur");
             e.printStackTrace();
         }
-
         writeLog("Connexion au serveur réussie.");
     }
 
