@@ -1,7 +1,6 @@
-package exercice4.Serveur;
+package exercice4.Serveur.Interpreteur;
 
 
-import exercice4.Serveur.Interpreteur.Reference;
 import stree.parser.SNode;
 
 public interface Command {

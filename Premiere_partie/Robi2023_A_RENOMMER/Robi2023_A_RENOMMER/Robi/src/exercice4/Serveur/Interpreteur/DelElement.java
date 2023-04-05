@@ -1,6 +1,5 @@
 package exercice4.Serveur.Interpreteur;
 
-import exercice4.Serveur.Command;
 import graphicLayer.GElement;
 import graphicLayer.GSpace;
 import stree.parser.SNode;

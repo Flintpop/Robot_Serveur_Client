@@ -6,7 +6,6 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
-import exercice4.Serveur.Command;
 import graphicLayer.GImage;
 import stree.parser.SNode;
 
