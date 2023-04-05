@@ -6,14 +6,10 @@ public class Interpreter {
 	
     public void compute(Environment environment, SNode next) {
     	
-    	if( next.hasChildren() ) {
-    		
+    	if(next.hasChildren() ) {
     		Reference ref = environment.getReferenceByName(next.get(0).contents());
     		
     		ref.run(next);
-    		
     	}
-    	
     }
-    
 }

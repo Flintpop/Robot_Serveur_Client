@@ -1,10 +1,20 @@
 package exercice4;
 
+@SuppressWarnings("unused")
 public class DataSC {
+    String errMsg;
+
     String cmd = null;
     String txt = null;
     String im = null;
     String env = null;
+    public String getErrMsg() {
+        return errMsg;
+    }
+
+    public void setErrMsg(String errMsg) {
+        this.errMsg = errMsg;
+    }
 
     public String getSNode() {
         return SNode;

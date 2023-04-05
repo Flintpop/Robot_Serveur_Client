@@ -1,14 +1,12 @@
 package exercice5;
 
-import java.awt.Point;
+import graphicLayer.GImage;
+import stree.parser.SNode;
+
+import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-
-import javax.imageio.ImageIO;
-
-import graphicLayer.GImage;
-import stree.parser.SNode;
 
 /**
  * <p>Mise en oeuvre de {@code Command} permettant de créer une nouvelle référence de type {@code GImage}.</p>
@@ -29,7 +27,7 @@ public class NewImage implements Command {
 			
 			// Récupération du fichier image à partir du pathname passé en paramètre
 			File path = new File(method.get(2).contents());			
-			BufferedImage rawImage = null;
+			BufferedImage rawImage;
 			try {
 				rawImage = ImageIO.read(path);
 			} catch (IOException e) {

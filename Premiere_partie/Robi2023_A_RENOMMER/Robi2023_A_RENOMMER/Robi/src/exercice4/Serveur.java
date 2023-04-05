@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import graphicLayer.*;
 import stree.parser.SNode;
 import stree.parser.SParser;
+import stree.parser.SSyntaxError;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -22,6 +23,7 @@ import java.util.Objects;
  * Cette classe est le serveur. Il interprète les commandes reçues du client et les exécute.
  * Il est aussi capable de renvoyer des images au client.
  */
+@SuppressWarnings("InfiniteLoopStatement")
 public class Serveur {
     ServerSocket serverSocket;
     Socket socket;
@@ -271,6 +273,11 @@ public class Serveur {
         } catch (NullPointerException chiant) {
             System.err.println(chiant.getMessage());
             chiant.printStackTrace();
+        } catch (Exception | SSyntaxError e) {
+            System.err.println("La commande ne fonctionne pas. Veuillez vérifier votre écriture.");
+            DataSC dataSC = new DataSC();
+            sendObject(dataSC, "Erreur, la commande ne fonctionne pas. Veuillez vérifier votre écriture.");
+            return;
         }
 
         sendObject(new DataSC());
@@ -338,9 +345,10 @@ public class Serveur {
      *
      * @param dataSC objet à envoyer au Client
      */
-    public void sendObject(DataSC dataSC) {
+    public void sendObject(DataSC dataSC, String errorMsg) {
         StringWriter sw = new StringWriter();
         ByteArrayOutputStream baos = getByteScreenshot();
+        dataSC.errMsg = errorMsg;
         dataSC.txt = currentExecutedScript;
         dataSC.SNode = outputSNodeText.getSNodeExpressionString(compiled);
         dataSC.env = environment.getEnvString();
@@ -359,6 +367,10 @@ public class Serveur {
             System.err.println("Erreur sendObject");
             e.printStackTrace();
         }
+    }
+
+    public void sendObject(DataSC dataSC) {
+        sendObject(dataSC, "");
     }
 
     public static void main(String[] args) {

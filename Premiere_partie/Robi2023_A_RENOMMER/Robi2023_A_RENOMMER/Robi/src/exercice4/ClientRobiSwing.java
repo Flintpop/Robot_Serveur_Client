@@ -190,7 +190,8 @@ public class ClientRobiSwing {
         byte[] encoded = Files.readAllBytes(Paths.get(f));
         res = new String(encoded, StandardCharsets.UTF_8);
 
-        return res;
+        res = res.replace("\"\\", "\"");
+        return res.replace("\\\"","\"");
     }
 
     /**
@@ -222,7 +223,16 @@ public class ClientRobiSwing {
 
         dataCS.txt = txt;
         sendDataServer(dataCS);
-        receiveDataServer();
+        DataSC response = receiveDataServer();
+        if (response == null) {
+            writeLog("Erreur, le serveur n'a pas répondu sur la réponse de compilation du script");
+            return;
+        }
+        if (!response.getErrMsg().equals("")) {
+            writeLog(response.getErrMsg());
+            return;
+        }
+
         writeLog("Script envoyé au serveur");
     }
 
