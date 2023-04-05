@@ -3,6 +3,7 @@ package exercice4;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.Tools;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -45,6 +46,7 @@ public class ClientRobiSwing {
     private Button button_mode_exec = null;
     private Button button_stop = null;
     private Button button_exec = null;
+    private Button button_switch_mode_graphics = null;
     private JTextPane txt_in = null; // saisies expressions ROBI
     private JScrollPane s_txt_in = null;
     private JTextPane txt_snode = null;
@@ -133,6 +135,7 @@ public class ClientRobiSwing {
         button_clear = new Button("Clear Log");
         button_mode_exec = new Button(client.getExecutionModeString());
         button_exec = new Button("Execution");
+        button_switch_mode_graphics = new Button("Switch graphics mode");
 
         disableButtons();
 
@@ -142,6 +145,7 @@ public class ClientRobiSwing {
         panel_button.add(button_stop);
         panel_button.add(button_mode_exec);
         panel_button.add(button_exec);
+        panel_button.add(button_switch_mode_graphics);
 
         setActionListeners();
 
@@ -153,43 +157,8 @@ public class ClientRobiSwing {
 
         createTextAreas();
 
+        // graphique
         graph = new JComponent() {
-            /**
-             * Endroit où repose l'affichage de l'image reçue du serveur.
-             */
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                if (image != null) {
-
-                    //gra.draw(g);
-
-                    //g.drawImage(image, 0, 0, this);
-                    /*
-                    Graph gr = new Graph();
-                    gr.setCmd("drawImage");
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    try {
-                        ImageIO.write(image, "jpg", baos);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                    String[] im = {Base64.getEncoder().encodeToString(Objects.requireNonNull(baos).toByteArray())};
-                    int[] entiers = {0, 0, 200, 200};
-                    gr.setEntiers(entiers);
-                    gr.setChaines(im);
-                    gr.draw(g);*/
-
-                    /*gr.setCmd("fillRect");
-                    gr.setCouleurs(new int[]{255, 0, 0});
-                    gr.setEntiers(new int[]{0, 0, 200, 200});
-                    gr.setChaines(new String[]{});
-                    gr.draw(g);*/
-                    /*for(Graph graph1:lg){
-                        graph1.draw(g);
-                    }*/
-                }
-            }
         };
 
         panel_env_snode.add(s_txt_env);
@@ -215,7 +184,7 @@ public class ClientRobiSwing {
      *
      * @param f le path du fichier à lire
      * @return le contenu du fichier
-     * @throws IOException
+     * @throws IOException Erreur d'input output
      */
     private String getFileContent(String f) throws IOException {
         String res;
@@ -223,7 +192,8 @@ public class ClientRobiSwing {
         byte[] encoded = Files.readAllBytes(Paths.get(f));
         res = new String(encoded, StandardCharsets.UTF_8);
 
-        return res;
+        res = res.replace("\"\\", "\"");
+        return res.replace("\\\"","\"");
     }
 
     /**
@@ -255,19 +225,16 @@ public class ClientRobiSwing {
 
         dataCS.txt = txt;
         sendDataServer(dataCS);
-        receiveDataServer();
-        writeLog("Script envoyé au serveur");
-    }
+        DataSC dataSC = receiveDataServer();
+        if (dataSC == null) {
+            System.err.println("Erreur, dataSC est null dans la réception des informations de compilation, dans sendScript");
+        }
 
-    /**
-     * Affiche l'image reçue du serveur.
-     *
-     * @param img l'image à afficher
-     */
-    private void displayScreenshot(BufferedImage img) {
-        image = img;
-        graph.repaint();
-        graph.revalidate();
+        if (!dataSC.getErrMsg().equals("")) {
+            writeLog(dataSC.getErrMsg());
+            return;
+        }
+        writeLog("Script envoyé au serveur");
     }
 
     private void displayEnv(String env) {
@@ -399,6 +366,7 @@ public class ClientRobiSwing {
         button_stop.setEnabled(true);
         button_exec.setEnabled(true);
         button_clear.setEnabled(true);
+        button_switch_mode_graphics.setEnabled(true);
     }
 
     private void disableButtons() {
@@ -408,6 +376,7 @@ public class ClientRobiSwing {
         button_mode_exec.setEnabled(false);
         button_exec.setEnabled(false);
         button_clear.setEnabled(false);
+        button_switch_mode_graphics.setEnabled(false);
     }
 
     /**
@@ -460,8 +429,31 @@ public class ClientRobiSwing {
 
         button_exec.addActionListener(e -> {
             sendExecuteFlag();
+            clear();
 
-            gra = receiveGraphsFromServer();
+
+            //graph.removeAll();
+
+            // Recoit le nombre de loop qu'il doit faire
+            DataSC dataSC = receiveDataServer();
+
+            if (dataSC == null) {
+                System.err.println("Erreur, pas de dataSC d'envoyé dans l'action listener du bouton exec");
+                return;
+            }
+
+            for (int i = 0; i < dataSC.getnLoops(); i++) {
+                gra = receiveGraphsFromServer();
+
+                if (gra == null) {
+                    System.err.println("Erreur, le graph envoyé par le serveur est null dans l'action listener du bouton exec");
+                    return;
+                }
+
+                gra.draw(graph);
+            }
+
+            // C'est pour avoir la ligne exécutée quand on est en mode step by step. Quand on est en mode bloc l'objet est envoyé quand même.
             DataSC data = receiveDataServer();
             if (data == null) {
                 writeLog("Erreur de communication avec le serveur");
@@ -472,6 +464,23 @@ public class ClientRobiSwing {
                 writeLog("Ligne : " + data.getTxt() + " exécutée");
             }
         });
+    }
+
+    private void clear() {
+        // Obtenez la largeur et la hauteur de la zone graphique
+        int width = graph.getWidth();
+        int height = graph.getHeight();
+
+        // Définissez la couleur de fond
+        Color c = graph.getBackground();
+
+        Graph g2 = new Graph();
+        g2.setCmd("drawRect");
+        g2.setCouleurs(new int[]{c.getRed(), c.getGreen(), c.getBlue()});
+        g2.setEntiers(new int[]{0, 0, width, height});
+
+        // Dessinez un rectangle rempli de la couleur de fond sur toute la zone graphique
+        g2.draw(graph);
     }
 
     private void sendStopFlag() {
@@ -487,7 +496,6 @@ public class ClientRobiSwing {
         }
 
         writeLog("Suppression des données d'environnement et de script du serveur");
-        displayScreenshot(lireImage(data.getIm()));
     }
 
     private void createTextAreas() {

@@ -28,4 +28,8 @@ public class Environment {
 		}
 		return result.toString();
 	}
+
+	public HashMap<String, Reference> getVariables() {
+		return this.variables;
+	}
 }
