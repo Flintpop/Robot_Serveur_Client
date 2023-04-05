@@ -1,4 +1,4 @@
-package exercice4;
+package exercice4.Serveur.Interpreteur;
 
 import exercice2.Exercice2_1_0;
 import stree.parser.SNode;

@@ -1,4 +1,4 @@
-package exercice4;
+package exercice4.Client;
 
 import java.io.IOException;
 import java.net.ConnectException;
@@ -6,7 +6,7 @@ import java.net.Socket;
 
 public class Client {
 
-    enum mode {
+    public enum mode {
         STEP_BY_STEP,
         BLOCK
     }

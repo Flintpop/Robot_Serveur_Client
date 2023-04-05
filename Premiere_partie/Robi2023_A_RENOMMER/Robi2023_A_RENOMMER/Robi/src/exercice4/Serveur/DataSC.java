@@ -1,4 +1,4 @@
-package exercice4;
+package exercice4.Serveur;
 
 public class DataSC {
     String cmd = null;

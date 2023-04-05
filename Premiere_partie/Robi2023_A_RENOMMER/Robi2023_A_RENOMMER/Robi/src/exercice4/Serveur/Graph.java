@@ -1,4 +1,4 @@
-package exercice4;
+package exercice4.Serveur;
 
 import java.awt.*;
 import java.io.ByteArrayInputStream;

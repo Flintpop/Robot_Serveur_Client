@@ -1,4 +1,4 @@
-package exercice4;
+package exercice4.Serveur.Interpreteur;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -6,6 +6,7 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
+import exercice4.Serveur.Command;
 import graphicLayer.GImage;
 import stree.parser.SNode;
 

@@ -1,7 +1,8 @@
-package exercice4;
+package exercice4.Serveur.Interpreteur;
 
 import java.awt.Dimension;
 
+import exercice4.Serveur.Command;
 import graphicLayer.GBounded;
 import graphicLayer.GSpace;
 import stree.parser.SNode;

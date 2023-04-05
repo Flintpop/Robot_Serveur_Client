@@ -1,8 +1,10 @@
-package exercice4;
+package exercice4.Serveur;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import exercice4.Client.Client;
+import exercice4.Serveur.Interpreteur.*;
 import graphicLayer.*;
 import stree.parser.SNode;
 import stree.parser.SParser;
@@ -294,8 +296,8 @@ public class Serveur {
 
             System.out.println("Behold! Le JSON divin est arrivé : " + jsonData);
 
-            if (jsonData.cmd.equals("switchMode")) {
-                return jsonData.cmd + " " + jsonData.txt;
+            if (jsonData.getCmd().equals("switchMode")) {
+                return jsonData.getCmd() + " " + jsonData.getTxt();
             }
 
             return jsonData.getCmd() + jsonData.getTxt();
@@ -362,10 +364,10 @@ public class Serveur {
      */
     public void sendObject(DataSC dataSC) {
         StringWriter sw = new StringWriter();
-        dataSC.txt = currentExecutedScript;
-        dataSC.SNode = outputSNodeText.getSNodeExpressionString(compiled);
-        dataSC.env = environment.getEnvString();
-        dataSC.cmd = "";
+        dataSC.setTxt(currentExecutedScript);
+        dataSC.setSNode(outputSNodeText.getSNodeExpressionString(compiled));
+        dataSC.setEnv(environment.getEnvString());
+        dataSC.setCmd("");
         try {
             JsonGenerator generator = new JsonFactory().createGenerator(sw);
             ObjectMapper mapper = new ObjectMapper();

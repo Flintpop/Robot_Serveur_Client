@@ -1,8 +1,11 @@
-package exercice4;
+package exercice4.Client;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import exercice4.Serveur.DataCS;
+import exercice4.Serveur.DataSC;
+import exercice4.Serveur.Graph;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -89,8 +92,8 @@ public class ClientRobiSwing {
 
         // Init mode d'exécution au serveur
         DataCS initSwitchMode = new DataCS();
-        initSwitchMode.cmd = "switchMode";
-        initSwitchMode.txt = client.getExecutionModeString();
+        initSwitchMode.setCmd("switchMode");
+        initSwitchMode.setTxt(client.getExecutionModeString());
         sendDataServer(initSwitchMode);
         writeLog("Initialisation du mode d'exécution : " + client.getExecutionModeString());
 
@@ -103,8 +106,8 @@ public class ClientRobiSwing {
      */
     private void sendCurrentSwitchMode() {
         DataCS initSwitchMode = new DataCS();
-        initSwitchMode.cmd = "switchMode";
-        initSwitchMode.txt = client.getExecutionModeString();
+        initSwitchMode.setCmd("switchMode");
+        initSwitchMode.setTxt(client.getExecutionModeString());
         sendDataServer(initSwitchMode);
         String oldExecutionMode;
         oldExecutionMode = "Block";
@@ -162,7 +165,7 @@ public class ClientRobiSwing {
                 super.paintComponent(g);
                 if (image != null) {
 
-                    //gra.draw(g);
+//                    gra.draw(g);
 
                     //g.drawImage(image, 0, 0, this);
                     /*
@@ -215,7 +218,6 @@ public class ClientRobiSwing {
      *
      * @param f le path du fichier à lire
      * @return le contenu du fichier
-     * @throws IOException
      */
     private String getFileContent(String f) throws IOException {
         String res;
@@ -231,8 +233,8 @@ public class ClientRobiSwing {
      */
     private void sendExecuteFlag() {
         DataCS dataCS = new DataCS();
-        dataCS.cmd = "execCommand";
-        dataCS.txt = "";
+        dataCS.setCmd("execCommand");
+        dataCS.setTxt("");
         sendDataServer(dataCS);
 
         if (client.getExecutionModeString().equals("Block")) {
@@ -245,7 +247,7 @@ public class ClientRobiSwing {
      */
     private void sendScript() {
         DataCS dataCS = new DataCS();
-        dataCS.cmd = "";
+        dataCS.setCmd("");
         String txt = txt_in.getText();
 
         if (txt.length() == 0) {
@@ -253,7 +255,7 @@ public class ClientRobiSwing {
             return;
         }
 
-        dataCS.txt = txt;
+        dataCS.setTxt(txt);
         sendDataServer(dataCS);
         receiveDataServer();
         writeLog("Script envoyé au serveur");
@@ -295,8 +297,8 @@ public class ClientRobiSwing {
             System.out.println("le serveur a renvoyé cote receive: " + json);
             jsonData = new ObjectMapper().readValue(json, DataSC.class);
 
-            displayEnv(jsonData.env);
-            displaySNode(jsonData.SNode);
+            displayEnv(jsonData.getEnv());
+            displaySNode(jsonData.getSNode());
 
             return jsonData;
         } catch (IOException | ClassNotFoundException e) {
@@ -476,8 +478,8 @@ public class ClientRobiSwing {
 
     private void sendStopFlag() {
         DataCS dataCS = new DataCS();
-        dataCS.cmd = "stop";
-        dataCS.txt = "";
+        dataCS.setCmd("stop");
+        dataCS.setTxt("");
         sendDataServer(dataCS);
 
         DataSC data = receiveDataServer();
