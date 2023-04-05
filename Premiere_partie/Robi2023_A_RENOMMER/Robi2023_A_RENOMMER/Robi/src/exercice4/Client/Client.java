@@ -1,18 +1,105 @@
 package exercice4.Client;
 
+import exercice4.Serveur.DataCS;
+import exercice4.Serveur.DataSC;
+
+import javax.swing.*;
 import java.io.IOException;
-import java.net.ConnectException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
 
-public class Client {
+import static exercice4.Client.ClientSocketOperations.*;
 
+public class Client {
+    public ClientRobiSwing ihm;
+    private Socket socket;
+
+    private ObjectOutputStream out;
+    private ObjectInputStream in;
     public enum mode {
         STEP_BY_STEP,
         BLOCK
+
+    }
+
+    public Client() {
+        ihm = new ClientRobiSwing();
+        setButtonsNames();
+
+        setActionListeners();
+
+        connectToServer(2000);
+
+        ihm.writeLog("Connection réussie");
+
+        ihm.enableButtons();
+
+        // Init mode d'exécution au serveur
+        DataCS initSwitchMode = new DataCS();
+        initSwitchMode.setCmd("switchMode");
+        initSwitchMode.setTxt(getExecutionModeString());
+        sendDataServer(initSwitchMode, out);
+        ihm.writeLog("Initialisation du mode d'exécution : " + getExecutionModeString());
+
+        ihm.writeLog("Réception de l'environnement et du SNode");
+        receiveDataServer(in, ihm);
+    }
+
+    private void setButtonsNames() {
+        ihm.button_file.setLabel("Sélectionner un fichier");
+        ihm.button_send_script.setLabel("Envoyer le script");
+        ihm.button_stop.setLabel("Reset l'environnement");
+        ihm.button_clear.setLabel("Effacer la console");
+        ihm.button_mode_exec.setLabel(getExecutionModeString());
+        ihm.button_exec.setLabel("Exécuter");
+    }
+
+    private void setActionListeners() {
+        ihm.button_file.addActionListener(e -> {
+            ihm.txt_out.setText(ihm.txt_out.getText() + "sélection d'un fichier\n");
+            String f = ihm.selectionnerFichier();
+            ihm.txt_out.setText(ihm.txt_out.getText() + "fichier sélectionné : " + f + "\n");
+
+            try {
+                String contentFile = ihm.getFileContent(f);
+                ihm.txt_in.setText(contentFile);
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        });
+
+        ihm.button_send_script.addActionListener(e -> sendScript(ihm, in, out));
+
+        ihm.button_stop.addActionListener(e -> {
+            sendStopFlag(ihm, in, out);
+            ihm.writeLog("Arrêt du script");
+        });
+        ihm.button_clear.addActionListener(e -> ihm.txt_out.setText(""));
+
+        ihm.button_mode_exec.addActionListener(e -> {
+            changeMode();
+            ihm.button_mode_exec.setLabel(getExecutionModeString());
+            sendCurrentSwitchMode();
+        });
+
+        ihm.button_exec.addActionListener(e -> {
+            sendExecuteFlag(out);
+
+            ihm.gra = receiveGraphsFromServer(in);
+            DataSC data = receiveDataServer(in, ihm);
+            if (data == null) {
+                ihm.writeLog("Erreur de communication avec le serveur");
+                return;
+            }
+
+            if (getExecutionMode() == Client.mode.STEP_BY_STEP) {
+                ihm.writeLog("Ligne : " + data.getTxt() + " exécutée");
+            }
+        });
     }
 
     mode executionMode = mode.BLOCK;
-
     public mode getExecutionMode() {
         return executionMode;
     }
@@ -38,53 +125,71 @@ public class Client {
      */
     protected void changeMode() {
         if (executionMode == mode.STEP_BY_STEP) {
-            executionMode = mode.BLOCK;
+            setExecutionMode(mode.BLOCK);
             return;
         }
-        executionMode = mode.STEP_BY_STEP;
+        setExecutionMode(mode.STEP_BY_STEP);
     }
 
-    /**
-     * Connecte le client au serveur avec de multiples tentatives.
-     * @param port Le port du serveur
-     * @return Un socket connecté
-     */
-    public static Socket connectToServer(int port) {
-        Socket socket;
-        int attempts = 0;
-        while (attempts < 30) {
-            socket = connectToServerTry(port);
-            if (socket != null) return socket;
-            attempts++;
-            if (attempts % 10 == 0) System.err.println("Connection failed. Trying again multiple times...");
-        }
-        throw new RuntimeException("Connection failed");
+    public ObjectInputStream getIn() {
+        return in;
     }
 
-    /**
-     * Tente de se connecter au serveur via un socket TCP.
-     *
-     * @param port Le port du serveur
-     * @return Un socket connecté ou non
-     */
-    public static Socket connectToServerTry(int port) {
-        Socket socket;
+    public void setIn(ObjectInputStream in) {
+        this.in = in;
+    }
+
+    public ObjectOutputStream getOut() {
+        return out;
+    }
+
+    public void setOut(ObjectOutputStream out) {
+        this.out = out;
+    }
+
+    public void connectToServer(int port) {
         try {
-            socket = new Socket("localhost", port);
-            System.out.println("Connection successful");
-            return socket;
-        } catch (ConnectException e) {
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException ex) {
-                throw new RuntimeException(ex);
-            }
+            setSocket(ClientSocketOperations.connectToServer(port));
+            setIn(new ObjectInputStream(getSocket().getInputStream()));
+            setOut(new ObjectOutputStream(getSocket().getOutputStream()));
         } catch (IOException e) {
-            System.err.println("Error while connecting to server");
-            System.err.println(e.getMessage());
             throw new RuntimeException(e);
         }
-        return null;
+    }
+
+    /**
+     * Envoi du mode d'exécution au serveur.
+     */
+    private void sendCurrentSwitchMode() {
+        DataCS initSwitchMode = new DataCS();
+        initSwitchMode.setCmd("switchMode");
+        initSwitchMode.setTxt(getExecutionModeString());
+        sendDataServer(initSwitchMode, out);
+        String oldExecutionMode;
+        oldExecutionMode = "Block";
+        if (getExecutionModeString().equalsIgnoreCase("Block")) {
+            oldExecutionMode = "Step by Step";
+        }
+        ihm.writeLog("Envoi du changement de mode d'exécution : " + oldExecutionMode + " -> " + getExecutionModeString());
+    }
+
+    public Socket getSocket() {
+        return socket;
+    }
+
+    public void setSocket(Socket socket) {
+        this.socket = socket;
+    }
+
+
+
+    public static void main(String[] args) {
+
+        try {
+            UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+        } catch (Exception ignored) {}
+
+        new Client();
     }
 }
 
