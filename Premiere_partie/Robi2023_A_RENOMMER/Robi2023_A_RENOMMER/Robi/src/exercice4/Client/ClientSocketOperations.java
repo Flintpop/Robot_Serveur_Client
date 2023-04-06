@@ -118,7 +118,6 @@ public class ClientSocketOperations {
         dataCS.setCmd("execCommand");
         dataCS.setTxt("");
         sendDataServer(dataCS, out);
-        // TODO: Write log "Script envoyé au serveur"
     }
 
     /**
@@ -158,6 +157,7 @@ public class ClientSocketOperations {
             System.out.println("le serveur a renvoyé cote graph: " + json);
             graphData = new ObjectMapper().readValue(json, Graph.class);
 
+            System.out.println("\nReception des graphes :\n" + json);
             return graphData;
         } catch (IOException | ClassNotFoundException e) {
             System.err.println("Erreur à la lecture des données du serveur");
@@ -165,7 +165,7 @@ public class ClientSocketOperations {
         }
     }
 
-    public static void sendStopFlag(ClientRobiSwing ihm, ObjectInputStream in, ObjectOutputStream out) {
+    public static DataSC sendStopFlag(ClientRobiSwing ihm, ObjectInputStream in, ObjectOutputStream out) {
         DataCS dataCS = new DataCS();
         dataCS.setCmd("stop");
         dataCS.setTxt("");
@@ -175,10 +175,14 @@ public class ClientSocketOperations {
 
         if (data == null) {
             ihm.writeLog("Erreur de communication avec le serveur");
-            return;
+            return null;
         }
 
         ihm.writeLog("Suppression des données d'environnement et de script du serveur");
+        if (ihm.getSendMode().contains("Screen")) {
+            return data;
+        }
+        return null;
     }
 
     public static void sendSwitchSendModeFlag(ObjectOutputStream out, String newSendMode) {

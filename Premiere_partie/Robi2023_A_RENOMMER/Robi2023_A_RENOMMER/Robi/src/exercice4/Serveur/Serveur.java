@@ -40,7 +40,7 @@ public class Serveur {
 
     }
 
-    private enum sendMode {
+    protected enum sendMode {
         SCREEN,
         COMMANDS
     }
@@ -55,7 +55,6 @@ public class Serveur {
      */
     public Serveur() {
         space = new GSpace("Serveur", dimensionSpace);
-//        space.open();
 
         compiled = new ArrayList<>();
         currentExecutedScript = "";
@@ -218,12 +217,14 @@ public class Serveur {
             sendServerMode = sendMode.SCREEN;
             System.out.println("Nouveau mode d'exécution : " + getSendServerMode());
             space.open();
-            // TODO: tout repeindre ? Ou laisser la partie graphique telle quelle (Donc ne pas supprimer) ?
+            sendImageEnvAndScript();
             return;
         }
 
         sendServerMode = sendMode.COMMANDS;
         System.out.println("Nouveau mode d'exécution : " + getSendServerMode());
+        space.close();
+        processClientCommand();
     }
 
     private String getSendServerMode() {
@@ -363,6 +364,7 @@ public class Serveur {
 
             if (sendServerMode.equals(sendMode.COMMANDS)) {
                 processClientCommand();
+                return;
             }
 
             sendImageEnvAndScript();
@@ -374,7 +376,9 @@ public class Serveur {
                 new Interpreter().compute(environment, sNode);
             }
             if (sendServerMode.equals(sendMode.COMMANDS)) {
+                compiled.clear();
                 processClientCommand();
+                return;
             }
 
             compiled.clear();
@@ -387,7 +391,9 @@ public class Serveur {
         new Interpreter().compute(environment, Objects.requireNonNull(compiled).get(0));
         currentExecutedScript = outputSNodeText.getSNodeExpressionString(compiled.subList(0, 1));
         if (sendServerMode.equals(sendMode.COMMANDS)) {
+            compiled.remove(0);
             processClientCommand();
+            return;
         }
         compiled.remove(0);
         sendImageEnvAndScript();
@@ -461,6 +467,7 @@ public class Serveur {
             generator.writeObject(g);
             generator.close();
 
+            System.out.println("\nEnvoi du graphique : \n" + sw);
             oos.writeObject(sw.toString());
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -479,7 +486,7 @@ public class Serveur {
         dataSC.SNode = outputSNodeText.getSNodeExpressionString(compiled);
 
         if (sendServerMode != null) {
-            if (sendServerMode.equals(sendMode.COMMANDS)) {
+            if (sendServerMode.equals(sendMode.SCREEN)) {
                 ByteArrayOutputStream baos = getByteScreenshot();
                 dataSC.im = Base64.getEncoder().encodeToString(Objects.requireNonNull(baos).toByteArray());
             }
@@ -495,6 +502,7 @@ public class Serveur {
             generator.writeObject(dataSC);
             generator.close();
 
+            System.out.println("\nEnvoi de l'objet : \n" + sw);
             oos.writeObject(sw.toString());
             currentExecutedScript = "";
         } catch (Exception e) {

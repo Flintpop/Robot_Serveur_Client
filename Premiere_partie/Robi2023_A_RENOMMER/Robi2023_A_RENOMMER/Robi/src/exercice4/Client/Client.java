@@ -3,11 +3,15 @@ package exercice4.Client;
 import exercice4.Serveur.DataCS;
 import exercice4.Serveur.DataSC;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.Base64;
 
 import static exercice4.Client.ClientSocketOperations.*;
 
@@ -29,6 +33,9 @@ public class Client {
         setActionListeners();
 
         connectToServer(2000);
+//        receiveDataServer(in, ihm);
+        ihm.writeLog("Réception de l'environnement et du SNode");
+        receiveDataServer(in, ihm);
 
         ihm.writeLog("Connection réussie");
 
@@ -37,6 +44,7 @@ public class Client {
         initSwitchSendMode.setCmd("switchSendMode " + ihm.getSendMode());
         initSwitchSendMode.setTxt("");
         sendDataServer(initSwitchSendMode, out);
+        receiveGraphUpdatedFromServer();
 
         // Init mode d'exécution au serveur
         DataCS initSwitchMode = new DataCS();
@@ -45,8 +53,6 @@ public class Client {
         sendDataServer(initSwitchMode, out);
         ihm.writeLog("Initialisation du mode d'exécution : " + getExecutionModeString());
 
-        ihm.writeLog("Réception de l'environnement et du SNode");
-        receiveDataServer(in, ihm);
 
     }
 
@@ -77,7 +83,13 @@ public class Client {
         ihm.button_send_script.addActionListener(e -> sendScript(ihm, in, out));
 
         ihm.button_stop.addActionListener(e -> {
-            sendStopFlag(ihm, in, out);
+            DataSC dataSC = sendStopFlag(ihm, in, out);
+            if (dataSC != null) {
+                ihm.displayScreenshot(lireImage(dataSC.getIm()));
+                ihm.writeLog("Réinitialisation de l'environnement. Affichage de la nouvelle image.");
+                return;
+            }
+
             resetClientEnvironment();
             ihm.writeLog("Environnement et script du serveur supprimés. Affichage réinitialisé.");
         });
@@ -92,17 +104,49 @@ public class Client {
 
         ihm.button_exec.addActionListener(e -> {
             sendExecuteFlag(out);
-            receiveGraphUpdatedFromServer();
+            if (ihm.getSendMode().contains("Commands")) {
+                receiveGraphUpdatedFromServer();
+                return;
+            }
+            receiveScreenUpdatedFromServer();
         });
 
        ihm.button_switch_send_modes.addActionListener( e-> switchSendMode());
     }
 
+    private void receiveScreenUpdatedFromServer() {
+        DataSC data = receiveDataServer(in, ihm);
+        if (data == null) {
+            ihm.writeLog("Erreur de communication avec le serveur");
+            return;
+        }
+
+        ihm.displayScreenshot(lireImage(data.getIm()));
+
+        if (getExecutionMode() == Client.mode.STEP_BY_STEP) {
+            ihm.writeLog("Ligne : " + data.getTxt() + " exécutée");
+        }
+    }
     private void switchSendMode() {
         ihm.switchSendMode();
+
         ihm.button_switch_send_modes.setLabel("Envoyer en mode " + ihm.getSendMode());
         sendSwitchSendModeFlag(out, ihm.getSendMode());
         ihm.writeLog("Mode d'envoi de script changé : " + ihm.getSendMode());
+
+        if (ihm.getSendMode().contains("Screen")) {
+            DataSC data = receiveDataServer(in, ihm);
+            if (data == null) {
+                System.err.println("Erreur de communication avec le serveur cote client, switchSendMode");
+                ihm.writeLog("Erreur de communication avec le serveur");
+                return;
+            }
+
+            ihm.displayScreenshot(lireImage(data.getIm()));
+            return;
+        }
+
+        receiveGraphUpdatedFromServer();
     }
 
     private void resetClientEnvironment() {
@@ -216,12 +260,28 @@ public class Client {
 
         // C'est pour avoir la ligne exécutée quand on est en mode step by step. Quand on est en mode bloc l'objet est envoyé quand même.
 
-        // Je ne sais plus où ce receive est et pourquoi il est là, mais si je l'enlève ça ne marche pas
-        // Flemme de retrouver le sendObject qui va avec
-        @SuppressWarnings("unused") DataSC data2 = receiveDataServer(in, ihm);
-
         if (getExecutionMode() == Client.mode.STEP_BY_STEP) {
             ihm.writeLog("Ligne : " + dataSC.getTxt() + " exécutée");
+        }
+    }
+
+    /**
+     * Lit une image encodée en base64.
+     *
+     * @param img l'image encodée en base64 en string
+     * @return l'image en BufferedImage
+     */
+    public BufferedImage lireImage(String img) {
+        // Convertissez la chaîne en tableau d'octets
+        byte[] imageEnOctets = Base64.getDecoder().decode(img);
+
+        // Créez un ByteArrayInputStream à partir du tableau d'octets
+        ByteArrayInputStream bais = new ByteArrayInputStream(imageEnOctets);
+
+        try {
+            return ImageIO.read(bais);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 

@@ -6,6 +6,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -44,11 +45,12 @@ public class ClientRobiSwing {
     protected JTextPane txt_out = null; // affichage des résultats
     private JScrollPane s_txt_out = null;
 
-    protected JComponent graph = null; // affichage graphique
+    protected CustomComponent graph = null;
 
     private String currentDir = ".";
     protected Button button_clear = null;
     protected Button button_switch_send_modes = null;
+    private BufferedImage image;
 
     protected enum sendMode {
         SCREEN,
@@ -78,7 +80,6 @@ public class ClientRobiSwing {
         frame.setExtendedState(JFrame.MAXIMIZED_BOTH); // Mode plein écran
 
         frame.setVisible(true);
-
     }
 
     /**
@@ -120,15 +121,8 @@ public class ClientRobiSwing {
 
         createTextAreas();
 
-        graph = new JComponent() {
-            /**
-             * Endroit où repose l'affichage de l'image reçue du serveur.
-             */
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-            }
-        };
+        graph = new CustomComponent();
+        graph.setImage(image);
 
         panel_env_snode.add(s_txt_env);
         panel_env_snode.add(s_txt_snode);
@@ -235,7 +229,17 @@ public class ClientRobiSwing {
         txt_in = new JTextPane();
         txt_in.setEditable(true);
         txt_in.setFont(courierFont);
-        txt_in.setText("(space add robi (Rect new))\n");
+        txt_in.setText("(space add robi (Rect new))\n" +
+                "(robi translate 130 50)\n" +
+                "(robi setColor yellow)\n" +
+                "(space add momo (Oval new))\n" +
+                "(momo setColor red)\n" +
+                "(momo translate 80 80)\n" +
+                "(space add pif (Image new alien.gif))\n" +
+                "(pif translate 100 0)\n" +
+                "(space add hello (Label new \"Hello world\"))\n" +
+                "(hello translate 10 10)\n" +
+                "(hello setColor black)\n");
         s_txt_in = new JScrollPane();
         s_txt_in.setPreferredSize(new Dimension(640, 480));
         s_txt_in.getViewport().add(txt_in);
@@ -285,8 +289,50 @@ public class ClientRobiSwing {
     public void switchSendMode() {
         if (serverSendMode.equals(sendMode.COMMANDS)) {
             setSendMode(sendMode.SCREEN);
+            graph.setMode(1);
         } else {
             setSendMode(sendMode.COMMANDS);
+            graph.setMode(0);
+        }
+    }
+
+    /**
+     * Affiche l'image reçue du serveur.
+     *
+     * @param img l'image à afficher
+     */
+    protected void displayScreenshot(BufferedImage img) {
+        image = img;
+        graph.setImage(image);
+//        graph.
+        graph.repaint();
+        graph.revalidate();
+    }
+}
+
+class CustomComponent extends JComponent {
+    private int mode;
+    private Image image;
+
+    public CustomComponent() {
+        this.mode = 0;
+    }
+
+    public void setMode(int mode) {
+        this.mode = mode;
+        repaint();
+    }
+
+    public void setImage(Image image) {
+        this.image = image;
+        repaint();
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        if (mode == 1 && image != null) {
+            g.drawImage(image, 0, 0, this);
         }
     }
 }
