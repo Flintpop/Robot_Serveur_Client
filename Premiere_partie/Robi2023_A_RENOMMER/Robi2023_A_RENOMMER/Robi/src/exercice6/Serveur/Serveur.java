@@ -418,8 +418,12 @@ public class Serveur {
         graph.setCouleurs(new int[]{cSpace.getRed(), cSpace.getGreen(), cSpace.getBlue()});
 
         sendGraph(graph);
+        ArrayList<Reference> listRef = new ArrayList<>();
+        for(int i=2;i<Reference.nbInstances;i++){
+            listRef.add(environment.getReferenceById(i));
+        }
 
-        for (Reference ref : environment.getVariables().values()) {
+        for (Reference ref : listRef) {
             graph = new Graph();
             if (ref.getReceiver() instanceof GRect) {
                 GBounded gBounded = ((GRect) ref.getReceiver());

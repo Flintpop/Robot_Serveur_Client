@@ -20,6 +20,15 @@ public class Environment {
         return variables.get(receiverName);
     }
 
+	public Reference getReferenceById(int id) {
+		for (String key : variables.keySet()) {
+			if (variables.get(key).id == id) {
+				return variables.get(key);
+			}
+		}
+		return null;
+	}
+
 	public String getEnvString() {
 		StringBuilder result = new StringBuilder();
 		for (String key : variables.keySet()) {

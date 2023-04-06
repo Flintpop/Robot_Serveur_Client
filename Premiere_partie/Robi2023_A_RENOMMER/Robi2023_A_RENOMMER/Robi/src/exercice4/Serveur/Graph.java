@@ -28,7 +28,12 @@ public class Graph {
 
 			// si 4 params de type int
 			// Method m1 = c.getDeclaredMethod(cmd,int.class,int.class,int.class,int.class);
-
+			if(cmd.contains("drawSpace")) {
+				Color col = new Color(couleurs[0],couleurs[1],couleurs[2]);
+				graphics.setColor(col);
+				graphics.fillRect(entiers[0], entiers[1], entiers[2], entiers[3]);
+				return;
+			}
 			Method [] lm = c.getMethods();
 			for (Method m : lm) {
 				if (m.getName().equals(cmd)) {
@@ -38,9 +43,6 @@ public class Graph {
 					}
 
 					switch (m.getName()) {
-						case "drawSpace":
-							co.setBackground(graphics.getColor());
-							break;
 						case "drawString":
 							System.out.println("Exec drawString");
 							System.out.println("param drawString : " + chaines[0] + " " + entiers[0] + " " + entiers[1]);
@@ -49,6 +51,7 @@ public class Graph {
 						case "drawRect":
 							System.out.println("Exec drawRect");
 							graphics.fillRect(entiers[0], entiers[1], entiers[2], entiers[3]);
+							graphics.setColor(Color.BLACK);
 							graphics.drawRect(entiers[0], entiers[1], entiers[2], entiers[3]);
 							break;
 						case "drawOval":

@@ -8,13 +8,16 @@ import graphicLayer.GSpace;
 import stree.parser.SNode;
 
 public class Reference {
-
+	public static int nbInstances = 1;
+	public int id;
 	Object receiver;
 	Map<String, Command> primitives;
 	
 	public Reference(Object receiver) {
 		this.receiver = receiver;
 		primitives = new HashMap<String, Command>();
+		id = nbInstances;
+		nbInstances++;
 	}
 
 	

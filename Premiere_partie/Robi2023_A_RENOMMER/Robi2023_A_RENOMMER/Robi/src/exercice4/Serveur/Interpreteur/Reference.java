@@ -8,12 +8,16 @@ import java.util.Map;
 
 public class Reference {
 
+	public static int nbInstances = 0;
+	public int id;
 	Object receiver;
 	public Map<String, Command> primitives;
 
 	public Reference(Object receiver) {
 		this.receiver = receiver;
 		primitives = new HashMap<>();
+		id = nbInstances;
+		nbInstances++;
 	}
 
 

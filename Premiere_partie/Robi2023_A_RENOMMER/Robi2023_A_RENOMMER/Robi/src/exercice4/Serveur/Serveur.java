@@ -243,6 +243,7 @@ public class Serveur {
 
         space.clear();
         environment = new Environment();
+        Reference.nbInstances = 0;
         Reference spaceRef = new Reference(space);
         Reference rectClassRef = new Reference(GRect.class);
         Reference ovalClassRef = new Reference(GOval.class);
@@ -412,14 +413,27 @@ public class Serveur {
         GSpace gSpace = ((GSpace) spaceRef.getReceiver());
         Color cSpace = gSpace.getBackground();
 
-        graph.setCmd("drawRect");
+        graph.setCmd("drawSpace");
         graph.setEntiers(new int[]{gSpace.getX(), gSpace.getY(), (int) dimensionSpace.getWidth(), (int) dimensionSpace.getHeight()});
         graph.setCouleurs(new int[]{cSpace.getRed(), cSpace.getGreen(), cSpace.getBlue()});
 
         sendGraph(graph);
+        ArrayList<Reference> listRef = new ArrayList<>();
+        for(int i = 1; i< Reference.nbInstances; i++){
+            listRef.add(environment.getReferenceById(i));
+        }
 
-        for (Reference ref : environment.getVariables().values()) {
+        if(listRef.size() < 1){
+            listRef = (ArrayList<Reference>) environment.getVariables().values();
+        }
+
+        for (Reference ref : listRef) {
             graph = new Graph();
+
+            if(ref == null){
+                continue;
+            }
+
             if (ref.getReceiver() instanceof GRect) {
                 GBounded gBounded = ((GRect) ref.getReceiver());
                 Color c = gBounded.getColor();
@@ -441,7 +455,7 @@ public class Serveur {
 
                 graph.setCmd("drawString");
                 graph.setChaines(new String[]{((GString) ref.getReceiver()).getString()});
-                graph.setEntiers(new int[]{((GString) ref.getReceiver()).getX(), ((GString) ref.getReceiver()).getY()});
+                graph.setEntiers(new int[]{((GString) ref.getReceiver()).getX(), ((GString) ref.getReceiver()).getY() + 10});
                 graph.setCouleurs(new int[]{c.getRed(), c.getGreen(), c.getBlue()});
             } else if (ref.getReceiver() instanceof GImage) {
                 GImage i = (GImage) ref.getReceiver();
