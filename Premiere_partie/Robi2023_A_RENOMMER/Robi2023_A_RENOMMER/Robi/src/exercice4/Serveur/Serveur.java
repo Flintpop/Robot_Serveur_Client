@@ -1,8 +1,9 @@
-package exercice4;
+package exercice4.Serveur;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import exercice4.Serveur.Interpreteur.*;
 import graphicLayer.*;
 import stree.parser.SNode;
 import stree.parser.SParser;
@@ -11,9 +12,11 @@ import stree.parser.SSyntaxError;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.image.RenderedImage;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -23,26 +26,36 @@ import java.util.Objects;
  * Cette classe est le serveur. Il interprète les commandes reçues du client et les exécute.
  * Il est aussi capable de renvoyer des images au client.
  */
-@SuppressWarnings("InfiniteLoopStatement")
 public class Serveur {
     ServerSocket serverSocket;
     Socket socket;
     ObjectOutputStream oos;
     ObjectInputStream ois;
-
     Environment environment = new Environment();
     List<SNode> compiled;
     String currentExecutedScript;
-    Client.mode executionMode;
+
+    public enum mode {
+        STEP_BY_STEP,
+        BLOCK
+
+    }
+
+    protected enum sendMode {
+        SCREEN,
+        COMMANDS
+    }
+    mode executionMode;
+    sendMode sendServerMode;
     GSpace space;
+    Dimension dimensionSpace = new Dimension(200, 100);
 
     /**
      * Constructeur du serveur. Il ouvre une fenêtre graphique et initialise les variables.
      * Il lance ensuite la méthode mainloop().
      */
     public Serveur() {
-        space = new GSpace("Serveur", new Dimension(200, 100));
-        space.open();
+        space = new GSpace("Serveur", dimensionSpace);
 
         compiled = new ArrayList<>();
         currentExecutedScript = "";
@@ -70,6 +83,7 @@ public class Serveur {
         environment.addReference("Image", imageClassRef);
         environment.addReference("Label", stringClassRef);
 
+        Graph.nGraphs = environment.getVariables().values().size();
         this.mainLoop();
     }
 
@@ -77,11 +91,11 @@ public class Serveur {
      * Cette méthode scan les commandes reçues du client et les exécute. Les commandes peuvent être :
      * - "switchMode" : permet de passer du mode d'exécution "step by step" au mode d'exécution "block"
      * - "execCommand" : permet d'exécuter une commande ou un script (en fonction du mode)
+     * - "stop" : permet d'arrêter l'exécution du script
      * - Autre : Reçoit un script ou une commande du client et les stocke en FIFO (First In First Out).
      */
     private void mainLoop() {
         String currentMsg;
-
         System.out.println("Serveur Robi");
         try {
             serverSocket = new ServerSocket(2000);
@@ -90,8 +104,9 @@ public class Serveur {
             oos = new ObjectOutputStream(socket.getOutputStream());
             ois = new ObjectInputStream(socket.getInputStream());
 
-            sendObject(new DataSC());
+            sendEnvAndScript();
 
+            //noinspection InfiniteLoopStatement
             while (true) {
                 currentMsg = receiveClientMsg();
                 System.out.println("Received " + currentMsg);
@@ -148,22 +163,22 @@ public class Serveur {
      *
      * @return : le byteArrayOutputStream de l'image capturée
      */
-    private ByteArrayOutputStream getByteScreenshot() {
+    private ByteArrayOutputStream getByteImage(Image image) {
         try {
-            BufferedImage image = screenshot(space);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ImageIO.write(image, "jpg", baos);
+            ImageIO.write((RenderedImage) image, "gif", baos);
             return baos;
         } catch (IOException e) {
             System.err.println("Erreur à la conversion en base64");
             e.printStackTrace();
         } catch (Exception e) {
-            System.err.println("Erreur inconnue dans getByteScreenshot");
+            System.err.println("Erreur inconnue dans getByteImage");
             System.err.println(e.getMessage());
             e.printStackTrace();
         }
         return null;
     }
+
 
     /**
      * Process le message du client. Si le message est "switchMode", on passe en mode block ou step by step.
@@ -172,7 +187,7 @@ public class Serveur {
      *
      * @param currentMsg : le message du client
      */
-    private void processClientMsg(String currentMsg) {
+    private void processClientMsg(String currentMsg) throws IOException {
 
         String[] msg = currentMsg.split(" ");
         if (msg[0].contains("switchMode")) {
@@ -186,20 +201,49 @@ public class Serveur {
         }
 
         if (msg[0].contains("stop")) {
-            stopExecution();
+            resetEnvironmentAndGraphics();
+            return;
+        }
+
+        if (msg[0].contains("switchSendMode")) {
+            switchSendMode(msg);
             return;
         }
 
         receiveScript(currentMsg);
     }
 
-    private void stopExecution() {
+    private void switchSendMode(String[] msg) {
+        if (msg[1].toLowerCase().contains("screen")) {
+            sendServerMode = sendMode.SCREEN;
+            System.out.println("Nouveau mode d'exécution : " + getSendServerMode());
+            space.open();
+            sendImageEnvAndScript();
+            return;
+        }
+
+        sendServerMode = sendMode.COMMANDS;
+        System.out.println("Nouveau mode d'exécution : " + getSendServerMode());
+        space.close();
+        processClientCommand();
+    }
+
+    private String getSendServerMode() {
+        if (sendServerMode.equals(sendMode.COMMANDS)) {
+            return "sendCommands";
+        } else {
+            return "sendScreenshot";
+        }
+    }
+
+    private void resetEnvironmentAndGraphics() {
         compiled.clear();
         currentExecutedScript = "";
         System.out.println("Reset du serveur");
 
         space.clear();
         environment = new Environment();
+        Reference.nbInstances = 0;
         Reference spaceRef = new Reference(space);
         Reference rectClassRef = new Reference(GRect.class);
         Reference ovalClassRef = new Reference(GOval.class);
@@ -224,7 +268,7 @@ public class Serveur {
         environment.addReference("Image", imageClassRef);
         environment.addReference("Label", stringClassRef);
 
-        sendObject(new DataSC());
+        sendEnvAndScript();
     }
 
     /**
@@ -235,12 +279,12 @@ public class Serveur {
     private void switchMode(String[] currentMsg) {
         // currentMsg[1] est le mode choisi
         if (currentMsg[1].toLowerCase().contains("block")) {
-            executionMode = Client.mode.BLOCK;
+            executionMode = mode.BLOCK;
             System.out.println("Nouveau mode d'exécution : " + getExecutionMode());
             return;
         }
 
-        executionMode = Client.mode.STEP_BY_STEP;
+        executionMode = mode.STEP_BY_STEP;
         System.out.println("Nouveau mode d'exécution : " + getExecutionMode());
     }
 
@@ -250,7 +294,7 @@ public class Serveur {
      * @return Le mode d'exécution actuel
      */
     private String getExecutionMode() {
-        if (executionMode == Client.mode.STEP_BY_STEP) return "Step by step";
+        if (executionMode == mode.STEP_BY_STEP) return "Step by step";
         return "Block";
     }
 
@@ -269,18 +313,17 @@ public class Serveur {
         try {
             compiled.addAll(parser.parse(currentMsg));
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("Erreur d'Input Output");
         } catch (NullPointerException chiant) {
             System.err.println(chiant.getMessage());
             chiant.printStackTrace();
         } catch (Exception | SSyntaxError e) {
-            System.err.println("La commande ne fonctionne pas. Veuillez vérifier votre écriture.");
             DataSC dataSC = new DataSC();
             sendObject(dataSC, "Erreur, la commande ne fonctionne pas. Veuillez vérifier votre écriture.");
             return;
         }
 
-        sendObject(new DataSC());
+        sendScript();
     }
 
     /**
@@ -297,6 +340,7 @@ public class Serveur {
 
             if (jsonData == null) {
                 System.err.println("jsonData est null");
+
                 System.err.println("Hélas! Le messager est arrivé les mains vides...");
                 return null;
             }
@@ -319,41 +363,154 @@ public class Serveur {
     public void executeCommand() {
         if (compiled.size() == 0) {
             System.err.println("Compiled est vide");
-            sendObject(new DataSC());
+
+            if (sendServerMode.equals(sendMode.COMMANDS)) {
+                processClientCommand();
+                return;
+            }
+
+            sendImageEnvAndScript();
             return;
         }
 
-        if (executionMode.equals(Client.mode.BLOCK)) {
+        if (executionMode.equals(mode.BLOCK)) {
             for (SNode sNode : Objects.requireNonNull(compiled)) {
                 new Interpreter().compute(environment, sNode);
             }
-            currentExecutedScript = outputSNodeText.getSNodeExpressionString(compiled);
+            if (sendServerMode.equals(sendMode.COMMANDS)) {
+                compiled.clear();
+                processClientCommand();
+                return;
+            }
+
             compiled.clear();
-            sendObject(new DataSC());
+
+            sendImageEnvAndScript();
             return;
         }
 
         // Execution step by step
         new Interpreter().compute(environment, Objects.requireNonNull(compiled).get(0));
         currentExecutedScript = outputSNodeText.getSNodeExpressionString(compiled.subList(0, 1));
+        if (sendServerMode.equals(sendMode.COMMANDS)) {
+            compiled.remove(0);
+            processClientCommand();
+            return;
+        }
         compiled.remove(0);
-        sendObject(new DataSC());
+        sendImageEnvAndScript();
+    }
+
+    private void processClientCommand() {
+        DataSC dataSC = new DataSC();
+
+        dataSC.nLoops = environment.getVariables().values().size();
+
+        sendObject(dataSC);
+
+        Graph graph = new Graph();
+        Reference spaceRef = environment.getReferenceByName("space");
+        GSpace gSpace = ((GSpace) spaceRef.getReceiver());
+        Color cSpace = gSpace.getBackground();
+
+        graph.setCmd("drawSpace");
+        graph.setEntiers(new int[]{gSpace.getX(), gSpace.getY(), (int) dimensionSpace.getWidth(), (int) dimensionSpace.getHeight()});
+        graph.setCouleurs(new int[]{cSpace.getRed(), cSpace.getGreen(), cSpace.getBlue()});
+
+        sendGraph(graph);
+        ArrayList<Reference> listRef = new ArrayList<>();
+        for(int i = 1; i< Reference.nbInstances; i++){
+            listRef.add(environment.getReferenceById(i));
+        }
+
+        if(listRef.size() < 1){
+            listRef = (ArrayList<Reference>) environment.getVariables().values();
+        }
+
+        for (Reference ref : listRef) {
+            graph = new Graph();
+
+            if(ref == null){
+                continue;
+            }
+
+            if (ref.getReceiver() instanceof GRect) {
+                GBounded gBounded = ((GRect) ref.getReceiver());
+                Color c = gBounded.getColor();
+
+                graph.setCmd("drawRect");
+                graph.setEntiers(new int[]{gBounded.getX(), gBounded.getY(), gBounded.getWidth(), gBounded.getHeight()});
+                graph.setCouleurs(new int[]{c.getRed(), c.getGreen(), c.getBlue()});
+            } else if (ref.getReceiver() instanceof GOval) {
+                GBounded gBounded = ((GOval) ref.getReceiver());
+                Color c = gBounded.getColor();
+
+                graph.setCmd("drawOval");
+                graph.setEntiers(new int[]{gBounded.getX(), gBounded.getY(), gBounded.getWidth(), gBounded.getHeight()});
+                graph.setCouleurs(new int[]{c.getRed(), c.getGreen(), c.getBlue()});
+            } else if (ref.getReceiver() instanceof GSpace) {
+                continue;
+            } else if (ref.getReceiver() instanceof GString) {
+                Color c = ((GString) ref.getReceiver()).getColor();
+
+                graph.setCmd("drawString");
+                graph.setChaines(new String[]{((GString) ref.getReceiver()).getString()});
+                graph.setEntiers(new int[]{((GString) ref.getReceiver()).getX(), ((GString) ref.getReceiver()).getY() + 10});
+                graph.setCouleurs(new int[]{c.getRed(), c.getGreen(), c.getBlue()});
+            } else if (ref.getReceiver() instanceof GImage) {
+                GImage i = (GImage) ref.getReceiver();
+                Point p = ((GImage) ref.getReceiver()).getPosition();
+                Image im = i.getRawImage();
+                ByteArrayOutputStream baos = getByteImage(im);
+                assert baos != null;
+                String imgInString = Base64.getEncoder().encodeToString(baos.toByteArray());
+                graph.setCmd("drawImage");
+                graph.setChaines(new String[] {imgInString});
+                graph.setEntiers(new int[]{p.x, p.y});
+            }
+
+            sendGraph(graph);
+        }
+    }
+
+    private void sendGraph(Graph g) {
+        try {
+            StringWriter sw = new StringWriter();
+
+            JsonGenerator generator = new JsonFactory().createGenerator(sw);
+            ObjectMapper mapper = new ObjectMapper();
+            generator.setCodec(mapper);
+            generator.writeObject(g);
+            generator.close();
+
+            System.out.println("\nEnvoi du graphique : \n" + sw);
+            oos.writeObject(sw.toString());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
-     * converti l'objet en JSON et l'envoie au Client
+     * Converti l'objet en JSON et l'envoie au Client
      *
      * @param dataSC objet à envoyer au Client
      */
     public void sendObject(DataSC dataSC, String errorMsg) {
         StringWriter sw = new StringWriter();
-        ByteArrayOutputStream baos = getByteScreenshot();
         dataSC.errMsg = errorMsg;
         dataSC.txt = currentExecutedScript;
         dataSC.SNode = outputSNodeText.getSNodeExpressionString(compiled);
+
+        if (sendServerMode != null) {
+            if (sendServerMode.equals(sendMode.SCREEN)) {
+                ByteArrayOutputStream baos = getByteScreenshot();
+                dataSC.im = Base64.getEncoder().encodeToString(Objects.requireNonNull(baos).toByteArray());
+            }
+        }
+
         dataSC.env = environment.getEnvString();
-        dataSC.im = Base64.getEncoder().encodeToString(Objects.requireNonNull(baos).toByteArray());
         dataSC.cmd = "";
+
         try {
             JsonGenerator generator = new JsonFactory().createGenerator(sw);
             ObjectMapper mapper = new ObjectMapper();
@@ -361,6 +518,7 @@ public class Serveur {
             generator.writeObject(dataSC);
             generator.close();
 
+            System.out.println("\nEnvoi de l'objet : \n" + sw);
             oos.writeObject(sw.toString());
             currentExecutedScript = "";
         } catch (Exception e) {
@@ -369,8 +527,69 @@ public class Serveur {
         }
     }
 
+    /**
+     * Prend une capture d'écran de la fenêtre graphique et la convertit en byteArrayOutputStream
+     *
+     * @return : le byteArrayOutputStream de l'image capturée
+     */
+    private ByteArrayOutputStream getByteScreenshot() {
+        try {
+            BufferedImage image = screenshot(space);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ImageIO.write(image, "jpg", baos);
+            return baos;
+        } catch (IOException e) {
+            System.err.println("Erreur à la conversion en base64");
+            e.printStackTrace();
+        } catch (Exception e) {
+            System.err.println("Erreur inconnue dans getByteScreenshot");
+            System.err.println(e.getMessage());
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private Graph getGraphsFromClient(Reference ref) {
+        Graph res = new Graph();
+        GBounded obj = (GBounded) ref.getReceiver();
+        if (ref.getReceiver() instanceof GBounded) {
+            Color c = obj.getColor();
+
+            res.setEntiers(new int[]{obj.getX(), obj.getY(), obj.getWidth(), obj.getHeight()});
+            res.setCouleurs(new int[]{c.getRed(), c.getGreen(), c.getBlue()});
+
+            if (ref.getReceiver() instanceof GRect)
+                res.setCmd("fillRect");
+
+            if (ref.getReceiver() instanceof GOval)
+                res.setCmd("fillOval");
+
+        }
+        if (ref.getReceiver() instanceof GString) {
+            Color c = obj.getColor();
+
+            res.setCmd("drawString");
+            res.setEntiers(new int[]{obj.getX(), obj.getY(), obj.getWidth(), obj.getHeight()});
+            res.setCouleurs(new int[]{c.getRed(), c.getGreen(), c.getBlue()});
+
+        }
+
+        return res;
+    }
     public void sendObject(DataSC dataSC) {
         sendObject(dataSC, "");
+    }
+
+    private void sendScript() {
+        sendObject(new DataSC());
+    }
+
+    private void sendEnvAndScript() {
+        sendObject(new DataSC());
+    }
+
+    private void sendImageEnvAndScript() {
+        sendObject(new DataSC());
     }
 
     public static void main(String[] args) {

@@ -1,4 +1,4 @@
-package exercice4;
+package exercice4.Serveur.Interpreteur;
 
 import graphicLayer.GElement;
 import graphicLayer.GSpace;
@@ -18,7 +18,7 @@ public class DelElement implements Command {
 		GSpace space = (GSpace) ref.receiver;
 		
 		Reference toDelete = envi.getReferenceByName(method.get(2).contents());
-		space.removeElement( (GElement) toDelete.receiver );
+		space.removeElement( (GElement) toDelete.getReceiver());
 		
 		envi.variables.remove(method.get(2).contents());
 		

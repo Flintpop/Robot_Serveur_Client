@@ -1,4 +1,4 @@
-package exercice4;
+package exercice4.Serveur.Interpreteur;
 
 import graphicLayer.GElement;
 import graphicLayer.GSpace;
@@ -19,16 +19,16 @@ public class SetColor implements Command {
 		}
 
 
-		if( ref.receiver instanceof GSpace ) {
-			GSpace space = (GSpace) ref.receiver;
+		if( ref.getReceiver() instanceof GSpace ) {
+			GSpace space = (GSpace) ref.getReceiver();
 			try {
 				space.setColor((Color) field.get(null));
 			} catch (IllegalAccessException e) {
 				throw new RuntimeException(e);
 			}
 		}
-		else if (ref.receiver instanceof GElement) {
-			GElement robi = (GElement) ref.receiver;
+		else if (ref.getReceiver() instanceof GElement) {
+			GElement robi = (GElement) ref.getReceiver();
 			try {
 				robi.setColor((Color) field.get(null));
 			} catch (IllegalAccessException e) {

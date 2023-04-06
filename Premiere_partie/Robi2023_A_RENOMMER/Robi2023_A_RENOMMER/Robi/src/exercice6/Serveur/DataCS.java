@@ -1,4 +1,4 @@
-package exercice4;
+package exercice6.Serveur;
 
 public class DataCS {
     String cmd = null;

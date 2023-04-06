@@ -51,4 +51,8 @@ public class GString extends GBounded implements Positionnable {
 		int adv = metrics.stringWidth(str);
 		return new Dimension(adv, hgt);
 	}
+
+	public String getString() {
+		return str;
+	}
 }

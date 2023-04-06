@@ -1,14 +1,9 @@
-package exercice4;
+package exercice4.Serveur.Interpreteur;
 
-import java.awt.Point;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-
-import graphicLayer.GBounded;
-import graphicLayer.GImage;
-import graphicLayer.GString;
 import graphicLayer.Positionnable;
 import stree.parser.SNode;
+
+import java.awt.*;
 
 public class Translate implements Command {
 

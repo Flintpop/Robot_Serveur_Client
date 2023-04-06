@@ -1,4 +1,4 @@
-package exercice4;
+package exercice4.Serveur.Interpreteur;
 
 import exercice2.Exercice2_1_0;
 import stree.parser.SNode;
@@ -27,6 +27,7 @@ public class outputSNodeText {
 
     /**
      * Donne le string correspondant au sNode passé en paramètre, mais est appelée par getSNodeExpressionString.
+     *
      * @param sNode : l'expression à return en String
      * @param string : le string de l'expression
      * @param printParenthesis : true si on doit afficher une parenthèse fermante, false sinon.

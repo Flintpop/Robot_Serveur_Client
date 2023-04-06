@@ -1,29 +1,18 @@
 package graphicLayer;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Point;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
 
 public class GSpace extends JPanel implements GContainer, KeyListener, MouseListener {
 	private static final long serialVersionUID = 1L;
 	private List<GElement> elements = new LinkedList<GElement>();
 	private List<KeyListener> keyListeners = new LinkedList<KeyListener>();
 
+	public JFrame frame;
 	String name = "";
 
 	public GSpace(String name, Dimension dim) {
@@ -39,12 +28,12 @@ public class GSpace extends JPanel implements GContainer, KeyListener, MouseList
 
 	public void changeWindowSize(Dimension dim) {
 		this.setPreferredSize(dim);
-		JFrame frame = (JFrame) SwingUtilities.getAncestorOfClass(JFrame.class, this);
+		frame = (JFrame) SwingUtilities.getAncestorOfClass(JFrame.class, this);
 		frame.pack();
 	}
 	
 	public void open() {
-		JFrame frame = new JFrame(name);
+		frame = new JFrame(name);
 		WindowAdapter wa = new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
 				System.exit(0);
@@ -55,6 +44,12 @@ public class GSpace extends JPanel implements GContainer, KeyListener, MouseList
 		frame.pack();
 		frame.setVisible(true);
 		requestFocus();
+	}
+
+	public void close() {
+		if (frame == null) return;
+		frame.setVisible(false);
+		frame.dispose();
 	}
 
 	public void addElement(GElement d) {
