@@ -31,7 +31,7 @@ public class Graph {
 			if(cmd.contains("drawSpace")) {
 				Color col = new Color(couleurs[0],couleurs[1],couleurs[2]);
 				graphics.setColor(col);
-				graphics.fillRect(entiers[0], entiers[1], entiers[2], entiers[3]);
+				graphics.fillRect(entiers[0], entiers[1], co.getWidth(), co.getHeight());
 				return;
 			}
 			Method [] lm = c.getMethods();
