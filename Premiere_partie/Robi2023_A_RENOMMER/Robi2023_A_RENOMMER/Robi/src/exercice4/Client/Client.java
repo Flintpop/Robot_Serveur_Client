@@ -20,6 +20,7 @@ public class Client {
     private Socket socket;
     private ObjectOutputStream out;
     private ObjectInputStream in;
+
     public enum mode {
         STEP_BY_STEP,
         BLOCK
@@ -111,7 +112,8 @@ public class Client {
             receiveScreenUpdatedFromServer();
         });
 
-       ihm.button_switch_send_modes.addActionListener( e-> switchSendMode());
+        ihm.button_switch_send_modes.addActionListener(e -> switchSendMode());
+
     }
 
     private void receiveScreenUpdatedFromServer() {
@@ -127,6 +129,7 @@ public class Client {
             ihm.writeLog("Ligne : " + data.getTxt() + " exécutée");
         }
     }
+
     private void switchSendMode() {
         ihm.switchSendMode();
 
@@ -154,6 +157,7 @@ public class Client {
     }
 
     mode executionMode = mode.BLOCK;
+
     public mode getExecutionMode() {
         return executionMode;
     }
@@ -164,6 +168,7 @@ public class Client {
 
     /**
      * Renvoie une chaîne de caractères représentant le mode d'exécution du client.
+     *
      * @return Une chaîne de caractères représentant le mode d'exécution du client.
      */
     protected String getExecutionModeString() {
@@ -289,7 +294,8 @@ public class Client {
 
         try {
             UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         new Client();
     }

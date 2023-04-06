@@ -21,7 +21,7 @@ import java.nio.file.Paths;
 public class ClientRobiSwing {
     protected Graph gra;
 
-    private final JFrame frame;
+    protected final JFrame frame;
 
     private final String title = "IHM Robi";
 
@@ -291,6 +291,7 @@ public class ClientRobiSwing {
             setSendMode(sendMode.SCREEN);
             graph.setMode(1);
         } else {
+            graph.setImage(null);
             setSendMode(sendMode.COMMANDS);
             graph.setMode(0);
         }
@@ -304,7 +305,6 @@ public class ClientRobiSwing {
     protected void displayScreenshot(BufferedImage img) {
         image = img;
         graph.setImage(image);
-//        graph.
         graph.repaint();
         graph.revalidate();
     }
@@ -320,12 +320,10 @@ class CustomComponent extends JComponent {
 
     public void setMode(int mode) {
         this.mode = mode;
-        repaint();
     }
 
     public void setImage(Image image) {
         this.image = image;
-        repaint();
     }
 
     @Override
