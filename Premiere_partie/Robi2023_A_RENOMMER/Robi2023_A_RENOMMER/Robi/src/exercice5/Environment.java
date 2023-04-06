@@ -19,4 +19,17 @@ public class Environment {
     public Reference getReferenceByName(String receiverName) {
         return variables.get(receiverName);
     }
+
+	public String getEnvString() {
+		StringBuilder result = new StringBuilder();
+		for (String key : variables.keySet()) {
+			result.append(key).append(" = ").append(variables.get(key));
+			result.append("\n");
+		}
+		return result.toString();
+	}
+
+	public HashMap<String, Reference> getVariables() {
+		return this.variables;
+	}
 }
