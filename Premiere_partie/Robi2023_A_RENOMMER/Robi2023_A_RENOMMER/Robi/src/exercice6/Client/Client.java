@@ -124,8 +124,17 @@ public class Client {
         ihm.displayScreenshot(lireImage(data.getIm()));
 
         if (getExecutionMode() == mode.STEP_BY_STEP) {
-            ihm.writeLog("Ligne : " + data.getTxt() + " exécutée");
+            printStepByStepLine(data);
         }
+    }
+
+    private void printStepByStepLine(DataSC data) {
+        if (data.getTxt().equals("")) {
+            ihm.writeLog("Erreur, le serveur n'a pas renvoyé de ligne à exécuter");
+            return;
+        }
+
+        ihm.writeLog("Ligne : " + data.getTxt() + " exécutée");
     }
     private void switchSendMode() {
         ihm.switchSendMode();
@@ -261,7 +270,7 @@ public class Client {
         // C'est pour avoir la ligne exécutée quand on est en mode step by step. Quand on est en mode bloc l'objet est envoyé quand même.
 
         if (getExecutionMode() == mode.STEP_BY_STEP) {
-            ihm.writeLog("Ligne : " + dataSC.getTxt() + " exécutée");
+            printStepByStepLine(dataSC);
         }
     }
 
