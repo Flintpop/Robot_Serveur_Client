@@ -62,7 +62,7 @@ Pour installer le projet, suivez les étapes suivantes :
 Pour configurer le projet, suivez les étapes suivantes :
 
 - Changez le port et le host du serveur dans le fichier "Server.java" si besoin
-- Changez le port et le host du serveur dans le ficher "ClientSocketsOperations.java" si besoin
+- Changez le port et le host du serveur dans le fichier "ClientSocketsOperations.java" si besoin
 
 ## Structure du projet
 
