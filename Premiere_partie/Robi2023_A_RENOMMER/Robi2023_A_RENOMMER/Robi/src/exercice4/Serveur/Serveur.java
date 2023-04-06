@@ -12,6 +12,7 @@ import stree.parser.SSyntaxError;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.image.RenderedImage;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -162,10 +163,10 @@ public class Serveur {
      *
      * @return : le byteArrayOutputStream de l'image capturée
      */
-    private ByteArrayOutputStream getByteImage(BufferedImage image) {
+    private ByteArrayOutputStream getByteImage(Image image) {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ImageIO.write(image, "jpg", baos);
+            ImageIO.write((RenderedImage) image, "gif", baos);
             return baos;
         } catch (IOException e) {
             System.err.println("Erreur à la conversion en base64");
@@ -446,10 +447,19 @@ public class Serveur {
                 GImage i = (GImage) ref.getReceiver();
 
                 Point p = ((GImage) ref.getReceiver()).getPosition();
+<<<<<<< Updated upstream:Premiere_partie/Robi2023_A_RENOMMER/Robi2023_A_RENOMMER/Robi/src/exercice4/Serveur/Serveur.java
                 BufferedImage bufferedImage = new BufferedImage(i.getRawImage().getWidth(null), i.getRawImage().getHeight(null), BufferedImage.TYPE_INT_ARGB);
                 graph.setCmd("drawString");
                 String imgInString = Objects.requireNonNull(getByteImage(bufferedImage)).toString(StandardCharsets.UTF_8);
                 graph.setChaines(new String[]{imgInString});
+=======
+                Image im = i.getRawImage();
+                ByteArrayOutputStream baos = getByteImage(im);
+                assert baos != null;
+                String imgInString = Base64.getEncoder().encodeToString(baos.toByteArray());
+                graph.setCmd("drawImage");
+                graph.setChaines(new String[] {imgInString});
+>>>>>>> Stashed changes:Premiere_partie/Robi2023_A_RENOMMER/Robi2023_A_RENOMMER/Robi/src/exercice4/Serveur.java
                 graph.setEntiers(new int[]{p.x, p.y});
             }
 
@@ -511,6 +521,7 @@ public class Serveur {
         }
     }
 
+<<<<<<< Updated upstream:Premiere_partie/Robi2023_A_RENOMMER/Robi2023_A_RENOMMER/Robi/src/exercice4/Serveur/Serveur.java
     /**
      * Prend une capture d'écran de la fenêtre graphique et la convertit en byteArrayOutputStream
      *
@@ -533,6 +544,35 @@ public class Serveur {
         return null;
     }
 
+=======
+    private Graph getGraphsFromClient(Reference ref) {
+        Graph res = new Graph();
+        GBounded obj = (GBounded) ref.getReceiver();
+        if (ref.getReceiver() instanceof GBounded) {
+            Color c = obj.getColor();
+
+            res.setEntiers(new int[]{obj.getX(), obj.getY(), obj.getWidth(), obj.getHeight()});
+            res.setCouleurs(new int[]{c.getRed(), c.getGreen(), c.getBlue()});
+
+            if (ref.getReceiver() instanceof GRect)
+                res.setCmd("fillRect");
+
+            if (ref.getReceiver() instanceof GOval)
+                res.setCmd("fillOval");
+
+        }
+        if (ref.getReceiver() instanceof GString) {
+            Color c = obj.getColor();
+
+            res.setCmd("drawString");
+            res.setEntiers(new int[]{obj.getX(), obj.getY(), obj.getWidth(), obj.getHeight()});
+            res.setCouleurs(new int[]{c.getRed(), c.getGreen(), c.getBlue()});
+
+        }
+
+        return res;
+    }
+>>>>>>> Stashed changes:Premiere_partie/Robi2023_A_RENOMMER/Robi2023_A_RENOMMER/Robi/src/exercice4/Serveur.java
     public void sendObject(DataSC dataSC) {
         sendObject(dataSC, "");
     }
