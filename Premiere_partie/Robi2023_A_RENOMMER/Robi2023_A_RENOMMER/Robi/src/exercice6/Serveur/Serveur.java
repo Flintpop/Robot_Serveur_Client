@@ -89,10 +89,10 @@ public class Serveur {
     }
 
     /**
-     * Cette méthode scan les commandes reçues du client et les exécute. Les commandes peuvent être :
-     * - "switchMode" : permet de passer du mode d'exécution "step by step" au mode d'exécution "block"
-     * - "execCommand" : permet d'exécuter une commande ou un script (en fonction du mode)
-     * - "stop" : permet d'arrêter l'exécution du script
+     * Cette méthode scan les commandes reçues du client et les exécute. Les commandes peuvent être : <br/>
+     * - "switchMode" : permet de passer du mode d'exécution "step by step" au mode d'exécution "block" <br/>
+     * - "execCommand" : permet d'exécuter une commande ou un script (en fonction du mode) <br/>
+     * - "stop" : permet d'arrêter l'exécution du script <br/>
      * - Autre : Reçoit un script ou une commande du client et les stocke en FIFO (First In First Out).
      */
     private void mainLoop() {
@@ -214,6 +214,14 @@ public class Serveur {
         receiveScript(currentMsg);
     }
 
+    /**
+     * Méthode permettant de changer le mode d'envoie des résultats d'exécution.
+     * Deux modes possible d'envoie : <br/>
+     * - par screenshot représentant le resultat <br/>
+     * - par liste de commande à executer pour redessiner le résultat
+     *
+     * @param msg Le mode que l'on souhaite utiliser
+     */
     private void switchSendMode(String[] msg) {
         if (msg[1].toLowerCase().contains("screen")) {
             sendServerMode = sendMode.SCREEN;
@@ -229,6 +237,11 @@ public class Serveur {
         processClientCommand();
     }
 
+    /**
+     * Retourne le mode d'envoie des resultats courant.
+     *
+     * @return un string indiquant le mode
+     */
     private String getSendServerMode() {
         if (sendServerMode.equals(sendMode.COMMANDS)) {
             return "sendCommands";
@@ -237,6 +250,9 @@ public class Serveur {
         }
     }
 
+    /**
+     * Mise à zéro de l'environnement du serveur.
+     */
     private void resetEnvironmentAndGraphics() {
         compiled.clear();
         currentExecutedScript = "";
@@ -317,7 +333,7 @@ public class Serveur {
         } catch (NullPointerException chiant) {
             System.err.println(chiant.getMessage());
             chiant.printStackTrace();
-        } catch (Exception | SSyntaxError e) {
+        } catch (SSyntaxError e) {
             DataSC dataSC = new DataSC();
             sendObject(dataSC, "Erreur, la commande ne fonctionne pas. Veuillez vérifier votre écriture.");
             return;
@@ -373,6 +389,8 @@ public class Serveur {
             return;
         }
 
+
+
         if (executionMode.equals(mode.BLOCK)) {
             for (SNode sNode : Objects.requireNonNull(compiled)) {
                 new Interpreter().compute(environment, sNode);
@@ -401,11 +419,15 @@ public class Serveur {
         sendImageEnvAndScript();
     }
 
+    /**
+     * Envoi au client l'ensemble des objets référencés dans l'environnement.
+     * Ils sont convertis dans une forme générique d'instance de Graph.
+     */
     private void processClientCommand() {
         DataSC dataSC = new DataSC();
 
+        // Envois le nombre d'objets Graph que le client doit lire
         dataSC.nLoops = environment.getVariables().values().size();
-
         sendObject(dataSC);
 
         Graph graph = new Graph();
@@ -413,18 +435,31 @@ public class Serveur {
         GSpace gSpace = ((GSpace) spaceRef.getReceiver());
         Color cSpace = gSpace.getBackground();
 
-        graph.setCmd("drawRect");
+        graph.setCmd("drawSpace");
         graph.setEntiers(new int[]{gSpace.getX(), gSpace.getY(), (int) dimensionSpace.getWidth(), (int) dimensionSpace.getHeight()});
         graph.setCouleurs(new int[]{cSpace.getRed(), cSpace.getGreen(), cSpace.getBlue()});
 
         sendGraph(graph);
+
+        // Creer une liste contenant les elements graphiques dans leur ordre de création
         ArrayList<Reference> listRef = new ArrayList<>();
         for(int i=2;i<Reference.nbInstances;i++){
             listRef.add(environment.getReferenceById(i));
         }
 
+        if(listRef.size() < 1){
+            listRef = (ArrayList<Reference>) environment.getVariables().values();
+        }
+
+        // Envoi d'objets Graph au client, dont le contenu vari selon le type de l'objet référencé
         for (Reference ref : listRef) {
             graph = new Graph();
+
+            if(ref == null){
+                continue;
+            }
+            graph = new Graph();
+
             if (ref.getReceiver() instanceof GRect) {
                 GBounded gBounded = ((GRect) ref.getReceiver());
                 Color c = gBounded.getColor();
@@ -463,6 +498,11 @@ public class Serveur {
         }
     }
 
+    /**
+     * Envoi d'un Graph au client sous la forme de JSON.
+     *
+     * @param g Graph envoyé
+     */
     private void sendGraph(Graph g) {
         try {
             StringWriter sw = new StringWriter();
@@ -481,7 +521,7 @@ public class Serveur {
     }
 
     /**
-     * Converti l'objet en JSON et l'envoie au Client
+     * Converti l'objet DataSC en JSON et l'envoie au Client
      *
      * @param dataSC objet à envoyer au Client
      */

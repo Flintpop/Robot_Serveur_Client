@@ -27,12 +27,16 @@ public class AddElement implements Command {
 
 	@Override
 	public Reference run(Reference ref, SNode method) {
-		
+
+		// si nom référence existe deja -> ne fait rien
+		if(envi.getReferenceByName(method.get(0).contents() + "." + method.get(2).contents()) != null)
+			return null;
+
 		GContainer cont = (GContainer) ref.receiver;
 		
 		SNode el = method.get(3);
 		
-		// Récupération de la référence de type dont le nouvel élément doit décendre
+		// Récupération de la référence de type dont le nouvel élément doit hériter
 		Reference toCreate = envi.getReferenceByName(el.get(0).contents());
 		
 		// Execution de la commande new associée au type, et récupération de la référence créée

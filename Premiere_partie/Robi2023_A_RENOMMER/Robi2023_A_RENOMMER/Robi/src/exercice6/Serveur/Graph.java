@@ -1,12 +1,12 @@
 package exercice6.Serveur;
 
-import javax.imageio.ImageIO;
-import javax.swing.*;
 import java.awt.*;
 import java.io.ByteArrayInputStream;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.Base64;
+import javax.imageio.ImageIO;
+import javax.swing.*;
 
 // fonctionne seulement pour toutes les fonctions graphiques qui ont des entiers en paramètre
 // il faut gérer des cas particuliers pour les autres
@@ -28,7 +28,12 @@ public class Graph {
 
 			// si 4 params de type int
 			// Method m1 = c.getDeclaredMethod(cmd,int.class,int.class,int.class,int.class);
-
+			if(cmd.contains("drawSpace")) {
+				Color col = new Color(couleurs[0],couleurs[1],couleurs[2]);
+				graphics.setColor(col);
+				graphics.fillRect(entiers[0], entiers[1], co.getWidth(), co.getHeight());
+				return;
+			}
 			Method [] lm = c.getMethods();
 			for (Method m : lm) {
 				if (m.getName().equals(cmd)) {
@@ -38,9 +43,6 @@ public class Graph {
 					}
 
 					switch (m.getName()) {
-						case "drawSpace":
-							co.setBackground(graphics.getColor());
-							break;
 						case "drawString":
 							System.out.println("Exec drawString");
 							System.out.println("param drawString : " + chaines[0] + " " + entiers[0] + " " + entiers[1]);
@@ -49,6 +51,7 @@ public class Graph {
 						case "drawRect":
 							System.out.println("Exec drawRect");
 							graphics.fillRect(entiers[0], entiers[1], entiers[2], entiers[3]);
+							graphics.setColor(Color.BLACK);
 							graphics.drawRect(entiers[0], entiers[1], entiers[2], entiers[3]);
 							break;
 						case "drawOval":
@@ -67,22 +70,22 @@ public class Graph {
 
 							switch(lp.length) {
 								case 0:
-								    m.invoke(graphics);
-								    break;
+									m.invoke(graphics);
+									break;
 								case 1:
-								    m.invoke(graphics, entiers[0]);
-								    break;
+									m.invoke(graphics, entiers[0]);
+									break;
 								case 2:
-								    m.invoke(graphics, entiers[0], entiers[1]);
-								    break;
+									m.invoke(graphics, entiers[0], entiers[1]);
+									break;
 								case 3:
-								    m.invoke(graphics, entiers[0], entiers[1], entiers[2]);
-								    break;
+									m.invoke(graphics, entiers[0], entiers[1], entiers[2]);
+									break;
 								case 4:
-								    m.invoke(graphics, entiers[0], entiers[1], entiers[2], entiers[3]);
-								    break;
+									m.invoke(graphics, entiers[0], entiers[1], entiers[2], entiers[3]);
+									break;
 								default:
-								    System.out.println("Erreur Graph.draw : trop de paramètres : " + lp.length);
+									System.out.println("Erreur Graph.draw : trop de paramètres : " + lp.length);
 							}
 
 							if (lp.length == 0) {

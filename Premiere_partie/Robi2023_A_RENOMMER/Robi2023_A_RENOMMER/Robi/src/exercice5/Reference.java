@@ -31,11 +31,17 @@ public class Reference {
 	}
 
 
-    public void run(SNode method) {
+    public int run(SNode method) {
     	//System.out.println(method.get(0).contents() + " " + method.get(1).contents());
     	Command c = this.getCommandByName(method.get(1).contents());
 
+		if(c == null) {
+			System.err.println("ERREUR : Commande " + method.get(1).contents() + " inexistante, mauvais nom");
+			return 2;
+		}
+
     	c.run(this, method);
+		return 0;
     }
 
     public void addCommand(String selector, Command primitive) {

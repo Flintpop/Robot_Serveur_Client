@@ -230,16 +230,18 @@ public class ClientRobiSwing {
         txt_in.setEditable(true);
         txt_in.setFont(courierFont);
         txt_in.setText("(space add robi (Rect new))\n" +
-                "(robi translate 130 50)\n" +
-                "(robi setColor yellow)\n" +
-                "(space add momo (Oval new))\n" +
-                "(momo setColor red)\n" +
-                "(momo translate 80 80)\n" +
-                "(space add pif (Image new alien.gif))\n" +
-                "(pif translate 100 0)\n" +
-                "(space add hello (Label new \"Hello world\"))\n" +
-                "(hello translate 10 10)\n" +
-                "(hello setColor black)\n");
+                "(space.robi setColor white)\n" +
+                "(space.robi setDim 100 100)\n" +
+                "(space.robi translate 20 10)\n" +
+                "(space.robi add im (Image new alien.gif))\n" +
+                "(space.robi.im translate 20 20))\n\n\n" +
+                "( space add robi (Rect new ) )\n\n" +
+                "( space.robi addScript addRect (\n" +
+                "( self name w c )\n" +
+                "( self add name ( Rect new ) )\n" +
+                "( self.name setColor c )\n" +
+                "( self.name setDim w w ) ) )\n\n" +
+                "( space.robi addRect mySquare 30 yellow )");
         s_txt_in = new JScrollPane();
         s_txt_in.setPreferredSize(new Dimension(640, 480));
         s_txt_in.getViewport().add(txt_in);
